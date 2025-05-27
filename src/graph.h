@@ -2,22 +2,35 @@
 #include <stdlib.h>
 #include <string>
 #include <fstream>
+#include <vector>
+#include <random>
 
-#include "sdpa/sdpa_call.h"
+#include "dsdp/dsdp5.h"
 
 #define N 1000
 
 class Graph {
-  private:
-    unsigned int n, m;
-    std::vector<int> edges[N];
-
-    SDPA repr;
-
-    void load_adjecency(std::ifstream& fs);
-    
   public:
-    void make_SDPA();
     Graph(std::string filepath, int type);
     void print();
+    void color();
+
+  private:
+    unsigned int n, m;
+    double maxr = 0.0;
+    double k;
+    std::vector<int> edges[N];
+
+    DSDP solver;
+    SDPCone cone;
+    double values[2][3];
+    int indices[2*N][3];
+    double* vecColoring;
+    int colors[N];
+    std::random_device rd;
+    std::mt19937 gen;
+    std::normal_distribution<double> ndist;
+
+    void load_adjecency(std::ifstream& fs);
+    void make_SDP();
 };
