@@ -33,6 +33,8 @@ void Graph::load_adjecency(std::ifstream& fs) {
           edges[i].push_back(j);
           m++;
         }
+      } else if(j > i) {
+        not_edges[i].push_back(j);
       }
     }
     maxr = max(maxr, r);
@@ -73,56 +75,6 @@ static void swap_column(double* A, int i, int j, int n) {
   }
 }
 
-
-// algorithm from https://eprints.maths.manchester.ac.uk/1199/1/covered/MIMS_ep2008_116.pdf
-static void cholesky(double* A, int n) {
-  int P[n];
-  for(int i = 0; i < n; i++)
-    P[i] = i;
-
-  for(int k = 0; k < n; k++) {
-    int max_i; double max_val=-100;
-    for(int i = k; i < n; i++) {
-      if(A[i*n+i] > max_val) {
-        max_i = i; max_val = A[i*n+i];
-      }
-    }
-    if(max_i != k) {
-      swap_row(A, k, max_i, n);
-      swap_column(A, k, max_i, n);
-      int tmp = P[max_i];
-      P[max_i] = P[k];
-      P[k] = tmp;
-    }
-
-    printf("%lf\n", A[k*n+k]);
-    A[k*n+k] = sqrt(A[k*n+k]);
-
-    for(int j = k+1; j < n; j++)
-      A[j*n+k] = A[j*n+k] / A[k*n+k];
-
-    for(int j = k+1; j < n; j++) {
-      for(int i = k+1; i <= j; i++) {
-        A[j*n+i] -= A[i*n+k]*A[j*n+k];
-      }
-    }
-  }
-
-  for(int i = 0; i < n; i++) {
-    for(int j = 0; j < i; j++)
-      A[j*n+i] = 0;
-  }
-
-  for(int i = 0; i < n; i++) {
-    while (P[i] != i) {
-      swap_column(A, i, P[i], n);
-      int temp = P[i];
-      P[i] = P[temp];
-      P[temp] = temp;
-    }
-  }
-}
-
 /*
   @type specifies the format of input file:
     0 - adjacency matrix
@@ -156,8 +108,22 @@ void Graph::print() {
   }
 }
 
+static void convert_lapack_out(int n, double* eigval, double* vecColoring) {
+  for(int i = 0; i < n; i++) {
+    for(int j = i; j < n; j++) {
+      vecColoring[i*n+j] *= sqrt(eigval[i]);
+      if(i==j) continue;
+      vecColoring[j*n+i] *= sqrt(eigval[j]);
+      double temp = vecColoring[i*n+j];
+      vecColoring[i*n+j] = vecColoring[j*n+i];
+      vecColoring[j*n+i] = temp;
+    }
+  }
+}
 
-void Graph::make_SDP() {
+void Graph::vector_color() {
+  DSDP solver;
+  SDPCone cone;
   DSDPCreate(n+m, &solver);
   for(unsigned i = 1; i <= n; i++)
     DSDPSetDualObjective(solver, i, 1.0);
@@ -200,7 +166,6 @@ void Graph::make_SDP() {
       i++;
     }
   }
-
   DSDPSetup(solver);
   DSDPSolve(solver);
   DSDPComputeX(solver);
@@ -219,7 +184,36 @@ void Graph::make_SDP() {
     }
     printf("\n");
   }
-  cholesky(vecColoring, n);
+
+  int lda = n;
+  double eigval[n];
+  double work[3*n-1];
+  int lwork = 3*n-1, info;
+  char v = 'V', u = 'U';
+  printf("\n");
+  LAPACK_dsyev(&v, &u, &lda, vecColoring, &lda, eigval, work, &lwork, &info);
+
+  for(unsigned i = 0; i < n; i++)
+    printf("%lf ", eigval[i]);
+  printf("\n");
+
+  convert_lapack_out(n, eigval, vecColoring);
+
+  for(unsigned i = 0; i < n; i++) {
+    for(unsigned j = 0; j < n; j++) {
+      printf("%lf ", vecColoring[i*n+j]);
+    }
+    printf("\n");
+  }
+
+  DSDPTerminationReason reason;
+  DSDPStopReason(solver,&reason); 
+  DSDPSolutionType pdfeasible;
+  DSDPGetSolutionType(solver, &pdfeasible);
+  if(pdfeasible == DSDP_PDFEASIBLE)
+    printf("feasible\n");
+  if(reason == DSDP_CONVERGED)
+    printf("converged\n");
 }
 
 void generate_rand_uvector(double* r, int n, std::normal_distribution<double>& nd, std::mt19937& gen) {
@@ -245,7 +239,7 @@ void Graph::color() {
   unsigned colored = 0;
   memset(colors, 0, n*sizeof(int));
   
-  make_SDP();
+  vector_color();
 
   int it = 1, nc = 1;
   double c = 0.5;//sqrt(2 * (k-2) / k * log(maxr));
@@ -282,4 +276,9 @@ void Graph::color() {
   for(unsigned i = 0; i < n; i++) {
     printf("%d ", colors[i]);
   }
+}
+
+
+void Graph::find_max_clique() {
+
 }

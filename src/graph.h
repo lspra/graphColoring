@@ -20,9 +20,8 @@ class Graph {
     double maxr = 0.0;
     double k;
     std::vector<int> edges[N];
+    std::vector<int> not_edges[N];
 
-    DSDP solver;
-    SDPCone cone;
     double values[2][3];
     int indices[2*N][3];
     double* vecColoring;
@@ -32,5 +31,6 @@ class Graph {
     std::normal_distribution<double> ndist;
 
     void load_adjecency(std::ifstream& fs);
-    void make_SDP();
+    void vector_color();
+    void find_max_clique();
 };
