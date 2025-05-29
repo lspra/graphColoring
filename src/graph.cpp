@@ -59,22 +59,6 @@ static void unpack_matrix(double * X, int n) {
   }
 }
 
-static void swap_row(double* A, int i, int j, int n) {
-  for(int k = 0; k < n; k++) {
-    double x = A[i*n+k];
-    A[i*n+k] = A[j*n+k];
-    A[j*n+k] = x;
-  }
-}
-
-static void swap_column(double* A, int i, int j, int n) {
-  for(int k = 0; k < n; k++) {
-    double x = A[k*n+i];
-    A[k*n+i] = A[k*n+j];
-    A[k*n+j] = x;
-  }
-}
-
 /*
   @type specifies the format of input file:
     0 - adjacency matrix
@@ -273,12 +257,148 @@ void Graph::color() {
   }
   
   printf("Graf uspjesno obojan s %d boja\n", nc-1);
+
   for(unsigned i = 0; i < n; i++) {
     printf("%d ", colors[i]);
   }
+  printf("\n");
 }
 
+void Graph::greedy_color() {
+  memset(colors, 0, n*sizeof(int));
+  for(int i = n-1; i >= 0; i--) {
+    bool taken[int(maxr)+1];
+    memset(taken, 0, (maxr+1)*sizeof(bool));
+    for(size_t j = 0; j < edges[i].size(); j++) {
+      int l = edges[i][j];
+      if(colors[l] != 0)
+        taken[colors[l]-1] = 1;
+    }
+
+    for(int j = 0; j < maxr+1; j++) {
+      if(!taken[j]) {
+        colors[i] = j+1;
+        break;
+      }
+    }
+  }
+
+  for(unsigned i = 0; i < n; i++) {
+    printf("%d ", colors[i]);
+  }
+  printf("\n");
+}
 
 void Graph::find_max_clique() {
+  DSDP solver;
+  SDPCone cone;
+  // inverse m
+  int m_ = (n-1)*n/2 - m;
+  DSDPCreate((n+1)+m_, &solver);
+  for(unsigned i = 1; i <= (n+1)+m_; i++)
+    DSDPSetDualObjective(solver, i, 1.0);
 
+  // creating cone with all constraints and C matrix
+  DSDPCreateSDPCone(solver, 1, &cone);
+
+  // setting the C matrix
+  double Cval[2*n];
+  int Cind[2*n];
+  for(unsigned i = 0; i < n; i++) {
+    Cval[i] = 0.5;
+    Cind[i] = (i+1)*(i+2)/2-1;
+  }
+  for(unsigned i = 0; i < n; i++) {
+    Cval[i+n] = 0.25;
+    Cind[i+n] = n*(n+1)/2+i;
+  }
+  SDPConeSetASparseVecMat(cone, 0, 0, n+1,
+    1.0, 0,
+    Cind, Cval, 2*n);
+  SDPConeViewDataMatrix(cone, 0, 0);
+
+  unsigned i = 1;
+  double Aval[1] = {1.};
+  int Aind[n+2][1];
+  for(; i <= n+1; i++) {
+    // setting the matrix for first n contraints, relating to each vertix
+    printf("%d\n", i);
+    Aind[i][0] = i*(i+1)/2-1;
+
+    SDPConeSetASparseVecMat(cone, 0, i, n+1,
+      1.0, 0,
+      Aind[i], Aval, 1);
+    SDPConeViewDataMatrix(cone, 0, i);
+  }
+
+  double Aval2[6] = {1., 1., 1., 1., 1., 1.};
+  int Aind2[m_][6];
+  for(unsigned j = 0; j < n; j++) {
+    for(size_t k = 0; k < not_edges[j].size(); k++) {
+      // setting the matrix for next m_ contraints, relating to each non-edge
+      // (j, l) is a non-edge -- j is the smaller number
+      int l = not_edges[j][k];
+      printf("%d: (%d, %d)\n", i, j, l);
+      Aind2[i][0] = (j+1)*(j+2)/2-1;
+      Aind2[i][1] = l*(l+1)/2+j;
+      Aind2[i][2] = (l+1)*(l+2)/2-1;
+      Aind2[i][3] = n*(n+1)/2+j;
+      Aind2[i][4] = n*(n+1)/2+l;
+      Aind2[i][5] = (n+1)*(n+2)/2-1;
+      
+      SDPConeSetASparseVecMat(cone, 0, i, n+1,
+        1.0, 0,
+        Aind2[i], Aval2, 6);
+      SDPConeViewDataMatrix(cone, 0, i);
+      i++;
+    }
+  }
+
+  DSDPSetup(solver);
+  DSDPSolve(solver);
+  DSDPComputeX(solver);
+  int len = (n+1)*(n+1);
+  double* X = (double*) malloc(len * sizeof(double));
+  SDPConeGetXArray(cone, 0, &X, &len);
+  double x;
+  DSDPGetDObjective(solver, &x);
+  printf("objective: %lf", x);
+
+  unpack_matrix(X, n+1);
+
+  int lda = n+1;
+  double eigval[n+1];
+  double work[3*(n+1)-1];
+  int lwork = 3*(n+1)-1, info;
+  char v = 'V', u = 'U';
+  LAPACK_dsyev(&v, &u, &lda, X, &lda, eigval, work, &lwork, &info);
+
+  convert_lapack_out(n+1, eigval, X);
+
+  int vsign[n+1];
+  double uvec[n+1];
+  generate_rand_uvector(uvec, n+1, ndist, gen);
+  for(unsigned i = 0; i < n+1; i++) {
+    double res = scalar(X+i*(n+1), uvec, n+1);
+    if(res >= 0) vsign[i] = 1;
+    else vsign[i] = -1;
+  }
+
+  for(unsigned i = 0; i < n; i++) {
+    for(size_t j = 0; j < not_edges[i].size(); j++) {
+      int l = not_edges[i][j];
+      if(abs(vsign[i] + vsign[l] + vsign[n])) {
+        if(abs(vsign[i]-vsign[n]) > abs(vsign[l]-vsign[n]))
+          vsign[i] = -vsign[i];
+        else
+          vsign[l] = -vsign[l];
+      }
+    }
+  }
+
+  printf("Maximum clique is:\n");
+  for(unsigned i = 0; i < n; i++) {
+    if(vsign[i] == vsign[n])
+      printf("%d ", i);
+  }
 }

@@ -14,6 +14,8 @@ class Graph {
     Graph(std::string filepath, int type);
     void print();
     void color();
+    void greedy_color();
+    void find_max_clique();
 
   private:
     unsigned int n, m;
@@ -32,5 +34,4 @@ class Graph {
 
     void load_adjecency(std::ifstream& fs);
     void vector_color();
-    void find_max_clique();
 };
