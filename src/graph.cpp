@@ -37,7 +37,10 @@ void Graph::load_adjecency(std::ifstream& fs) {
         not_edges[i].push_back(j);
       }
     }
-    maxr = max(maxr, r);
+    if(r > maxr) {
+      maxr = r;
+      maxr_ind = i;
+    }
     i++;
   }
   if (i < n) {
@@ -64,8 +67,7 @@ static void unpack_matrix(double * X, int n) {
     0 - adjacency matrix
     1 - parovi susjednih vrhova
 */
-Graph::Graph(std::string filename, int type) : gen(rd()), ndist(0.0, 1.0) {
-
+Graph::Graph(std::string filename, int type) : rd{}, gen{rd()}, ndist{0.0, 1.0} {
   std::ifstream f(filename);
   if (!f.is_open()) {
     fprintf(stderr, "Failed to open a file %s\n", filename.data());
@@ -76,7 +78,7 @@ Graph::Graph(std::string filename, int type) : gen(rd()), ndist(0.0, 1.0) {
   
   f.close();
 
-  vecColoring = (double*) malloc(max(n*n, (n+m+1)*(n+m+2)/2)*sizeof(double));
+  vecColoring = (double*) malloc(max(n*n, (n+1)*(n+2))*sizeof(double));
   
   values[0][0] = 1.0;
   values[1][0] = 1.0;
@@ -109,43 +111,45 @@ void Graph::vector_color() {
   DSDP solver;
   SDPCone cone;
   DSDPCreate(n+m, &solver);
+  DSDPSetGapTolerance(solver, 1e-2);
   for(unsigned i = 1; i <= n; i++)
     DSDPSetDualObjective(solver, i, 1.0);
 
   // creating cone with all constraints and C matrix
   DSDPCreateSDPCone(solver, 1, &cone);
+  SDPConeSetXArray(cone, 0, n+1, vecColoring, (n+1)*(n+2));
 
   // setting the C matrix
   // n*(n+1) / 2 - 1 predstavnja n-ti elementi dijagonale
   indices[0][0] = (n+1)*(n+2)/2-1;
-  SDPConeSetASparseVecMat(cone, 0, 0, n+m+1,
+  SDPConeSetASparseVecMat(cone, 0, 0, n+1,
     -1.0, 0,
     indices[0], values[0], 1);
-  SDPConeViewDataMatrix(cone, 0, 0);
+    //SDPConeViewDataMatrix(cone, 0, 0);
 
   unsigned i = 1;
   for(; i <= n; i++) {
     // setting the matrix for first n contraints, relating to each vertix
-    printf("%d\n", i);
+    //printf("%d\n", i);
     indices[i][0] = i*(i+1)/2-1;
 
-    SDPConeSetASparseVecMat(cone, 0, i, n+m+1,
+    SDPConeSetASparseVecMat(cone, 0, i, n+1,
       1.0, 0,
       indices[i], values[0], 1);
-    SDPConeViewDataMatrix(cone, 0, i);
+    //SDPConeViewDataMatrix(cone, 0, i);
   }
 
   for(unsigned j = 0; j < n; j++) {
     for(size_t k = 0; k < edges[j].size(); k++) {
-      printf("%d\n", i);
+      //// printf("%d\n", i);
       // setting the matrix for next m contraints, relating to each edge
       indices[i][0] = (edges[j][k])*(edges[j][k]+1)/2 + j;
       indices[i][1] = (n+1)*(n+2)/2-1;
       indices[i][2] = (i+1)*(i+2)/2-1;
       
-      SDPConeSetASparseVecMat(cone, 0, i, n+m+1,
+      SDPConeSetASparseVecMat(cone, 0, i, n+1,
         1.0, 0,
-        indices[i], values[1], 3);
+        indices[i], values[1], 2);
       SDPConeViewDataMatrix(cone, 0, i);
       i++;
     }
@@ -160,7 +164,6 @@ void Graph::vector_color() {
   // x = -1/(k-1)
   k = -1/x + 1;
   printf("objective: %lf, k: %lf\n", x, k);
-
   unpack_matrix(vecColoring, n);
   for(unsigned i = 0; i < n; i++) {
     for(unsigned j = 0; j < n; j++) {
@@ -179,6 +182,7 @@ void Graph::vector_color() {
 
   for(unsigned i = 0; i < n; i++)
     printf("%lf ", eigval[i]);
+  printf("\n");
   printf("\n");
 
   convert_lapack_out(n, eigval, vecColoring);
@@ -203,7 +207,9 @@ void Graph::vector_color() {
 void generate_rand_uvector(double* r, int n, std::normal_distribution<double>& nd, std::mt19937& gen) {
   for(int i = 0; i < n; i++)
     r[i] = nd(gen);
+}
 
+void normalize(double* r, int n) {
   double len = 0;
   for(int i = 0; i < n; i++)
     len += r[i] * r[i];
@@ -220,23 +226,23 @@ double scalar(double* x, double* y, int n) {
 }
 
 void Graph::color() {
-  unsigned colored = 0;
   memset(colors, 0, n*sizeof(int));
-  
   vector_color();
 
+  unsigned colored = 0;
+
   int it = 1, nc = 1;
-  double c = 0.5;//sqrt(2 * (k-2) / k * log(maxr));
+  double c = 0.;//pow(maxr, -1./3.)/2;// sqrt(2 * (k-2) / k * log(maxr));
   printf("%lf %lf %lf\n", c, k, maxr);
   while (colored != n) {
     bool used = 0;
     double r[n];
     generate_rand_uvector(r, n, ndist, gen);
-  
+    normalize(r,n);
     for(unsigned i = 0; i < n; i++) {
       if(colors[i]) continue;
 
-      if(scalar(r, vecColoring + i*n, n) > c) {
+      if(scalar(r, vecColoring + i*n, n) >= c) {
         used = 1;
         colors[i] = nc;
         colored++;
@@ -244,16 +250,20 @@ void Graph::color() {
     }
 
     for(unsigned i = 0; i < n; i++) {
-      if(colors[i] != it) continue;
+      if(colors[i] != nc) continue;
       for(size_t j = 0; j < edges[i].size(); j++) {
-        if(colors[edges[i][j]] == it) {
+        if(colors[edges[i][j]] == nc) {
           colors[edges[i][j]] = 0;
           colored--;
         }
       }
     }
     it++;
-    if(used) nc++;
+    // TODO trebalo bi prihvatiti boju samo ako je obojana barem polovica ostatka grafa
+    // ovo ce usporiti ali poboljsati algoritam
+    // nadajmo se da ce biti bolji od greedy glupog
+    if(used)
+      nc++;
   }
   
   printf("Graf uspjesno obojan s %d boja\n", nc-1);
@@ -262,6 +272,7 @@ void Graph::color() {
     printf("%d ", colors[i]);
   }
   printf("\n");
+  check_colors_valid();
 }
 
 void Graph::greedy_color() {
@@ -287,6 +298,34 @@ void Graph::greedy_color() {
     printf("%d ", colors[i]);
   }
   printf("\n");
+  check_colors_valid();
+}
+
+void Graph::check_colors_valid() {
+  for(unsigned i = 0; i < n; i++){
+    for(size_t j = 0; j < edges[i].size(); j++) {
+      int l = edges[i][j];
+      if(colors[i] == colors[l]) {
+        printf("coloring is not valid!\n");
+        return;
+      }
+    }
+  } 
+  printf("coloring is valid!\n");
+}
+
+void Graph::check_clique_valid(int* clique, int len) {
+  for(int i = 0; i < len; i++) {
+    for(int j = i; j < len; j++) {
+      for(unsigned k = 0; k < not_edges[clique[i]].size(); k++) {
+        if(not_edges[clique[i]][k] == clique[j]) {
+          printf("clique not valid, no edges %d %d\n", clique[i], clique[j]);
+          return;
+        }
+      }
+    }
+  }
+  printf("clique valid\n");
 }
 
 void Graph::find_max_clique() {
@@ -315,20 +354,20 @@ void Graph::find_max_clique() {
   SDPConeSetASparseVecMat(cone, 0, 0, n+1,
     1.0, 0,
     Cind, Cval, 2*n);
-  SDPConeViewDataMatrix(cone, 0, 0);
+  //SDPConeViewDataMatrix(cone, 0, 0);
 
   unsigned i = 1;
   double Aval[1] = {1.};
   int Aind[n+2][1];
   for(; i <= n+1; i++) {
     // setting the matrix for first n contraints, relating to each vertix
-    printf("%d\n", i);
+    //printf("%d\n", i);
     Aind[i][0] = i*(i+1)/2-1;
 
     SDPConeSetASparseVecMat(cone, 0, i, n+1,
       1.0, 0,
       Aind[i], Aval, 1);
-    SDPConeViewDataMatrix(cone, 0, i);
+    //SDPConeViewDataMatrix(cone, 0, i);
   }
 
   double Aval2[6] = {1., 1., 1., 1., 1., 1.};
@@ -338,7 +377,7 @@ void Graph::find_max_clique() {
       // setting the matrix for next m_ contraints, relating to each non-edge
       // (j, l) is a non-edge -- j is the smaller number
       int l = not_edges[j][k];
-      printf("%d: (%d, %d)\n", i, j, l);
+      // printf("%d: (%d, %d)\n", i, j, l);
       Aind2[i][0] = (j+1)*(j+2)/2-1;
       Aind2[i][1] = l*(l+1)/2+j;
       Aind2[i][2] = (l+1)*(l+2)/2-1;
@@ -349,7 +388,7 @@ void Graph::find_max_clique() {
       SDPConeSetASparseVecMat(cone, 0, i, n+1,
         1.0, 0,
         Aind2[i], Aval2, 6);
-      SDPConeViewDataMatrix(cone, 0, i);
+      //SDPConeViewDataMatrix(cone, 0, i);
       i++;
     }
   }
@@ -378,6 +417,7 @@ void Graph::find_max_clique() {
   int vsign[n+1];
   double uvec[n+1];
   generate_rand_uvector(uvec, n+1, ndist, gen);
+  normalize(uvec, n+1);
   for(unsigned i = 0; i < n+1; i++) {
     double res = scalar(X+i*(n+1), uvec, n+1);
     if(res >= 0) vsign[i] = 1;
@@ -387,7 +427,7 @@ void Graph::find_max_clique() {
   for(unsigned i = 0; i < n; i++) {
     for(size_t j = 0; j < not_edges[i].size(); j++) {
       int l = not_edges[i][j];
-      if(abs(vsign[i] + vsign[l] + vsign[n])) {
+      if(abs(vsign[i] + vsign[l] + vsign[n]) != 1) {
         if(abs(vsign[i]-vsign[n]) > abs(vsign[l]-vsign[n]))
           vsign[i] = -vsign[i];
         else
@@ -396,9 +436,15 @@ void Graph::find_max_clique() {
     }
   }
 
+  int clique[n], count = 0;
+
   printf("Maximum clique is:\n");
   for(unsigned i = 0; i < n; i++) {
-    if(vsign[i] == vsign[n])
+    if(vsign[i] == vsign[n]) {
+      clique[count++] = i;
       printf("%d ", i);
+    }
   }
+  printf("\nSize: %d\n", count);
+  check_clique_valid(clique, count);
 }

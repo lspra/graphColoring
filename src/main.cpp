@@ -2,9 +2,9 @@
 #include <random>
 
 int main() {
-  Graph a("examples/graph1", 0);
+  Graph a("examples/random_prob/graph35_0.10", 0);
   // a.print();
-  a.color();
-  // a.find_max_clique();
-  a.greedy_color();
+  // a.color();
+  // a.greedy_color();
+  a.find_max_clique();
 }
