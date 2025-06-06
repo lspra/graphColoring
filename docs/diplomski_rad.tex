@@ -1,0 +1,329 @@
+\documentclass[diplomskirad]{fer}
+% Dodaj opciju upload za generiranje konačne verzije koja se učitava na FERWeb
+% Add the option upload to generate the final version which is uploaded to FERWeb
+
+%--- PODACI O RADU / THESIS INFORMATION ----------------------------------------
+
+\newtheorem{definicija}{Definicija}
+\newtheorem{theorem}{Teorem}[chapter]
+% Naslov na engleskom jeziku / Title in English
+\title{Semidefinite programming relaxation for graph coloring and maximum clique number}
+
+% Naslov na hrvatskom jeziku / Title in Croatian
+\naslov{Relaksacije semidefinitnog programiranja za probleme bojanja grafova i
+maksimalne klike}
+
+% Broj rada / Thesis number
+\brojrada{819}
+
+% Autor / Author
+\author{Lana Šprajc}
+
+% Mentor 
+\mentor{prof. dr. sc. Josipa Pina Milišić}
+
+% Datum rada na engleskom jeziku / Date in English
+\date{June, 2025}
+
+% Datum rada na hrvatskom jeziku / Date in Croatian
+\datum{lipanj, 2025.}
+
+
+%-------------------------------------------------------------------------------
+
+
+\begin{document}
+
+
+% Naslovnica se automatski generira / Titlepage is automatically generated
+\maketitle
+
+
+%--- ZADATAK / THESIS ASSIGNMENT -----------------------------------------------
+
+% Zadatak se ubacuje iz vanjske datoteke / Thesis assignment is included from external file
+% Upiši ime PDF datoteke preuzete s FERWeb-a / Enter the filename of the PDF downloaded from FERWeb
+\zadatak{hr_0036532785_94.pdf}
+
+
+%--- ZAHVALE / ACKNOWLEDGMENT --------------------------------------------------
+
+\begin{zahvale}
+  % Ovdje upišite zahvale / Write in the acknowledgment
+  Hvala Branimiru na podsjetnicima da trebam pisati diplomski...
+\end{zahvale}
+
+
+% Odovud započinje numeriranje stranica / Page numbering starts from here
+\mainmatter
+
+
+% Sadržaj se automatski generira / Table of contents is automatically generated
+\tableofcontents
+
+
+%--- UVOD / INTRODUCTION -------------------------------------------------------
+\chapter{Uvod}
+\label{pog:uvod}
+
+U teoriji grafova, problemi bojanja grafa i traženja maksimalne klike poznati su NP-teški problemi s brojnim primjenama. Slijedi opis
+ovih problema. Bojanje grafa svakom vrhu grafa pridružuje jednu boju na način da su svaka dva susjedna vrha različitih boja. Poznate primjene ovog
+problema su alociranju registara, raspoređivanju zadataka\dots  %TODO izvor za primjenu %TODO ovdje ili poslije treba spomenuti 3 color theorem
+
+Problem traženja maksimalne klike je problem pronalaska potpuno povezanog podgrafa. Problem ima česte primjene u kemiji i bioinformatici,
+primjerice za pronalaženje sličnih struktura u molekulama. %TODO izvor za primjenu
+
+Za oba ovo problema često je dovoljno pronaći rješenje koje je blizu optimalnom. Semidefinitno programiranja daje dobre aproksimacije rješenja problema
+koje se mogu izračunati u polinomnoj složenosti.
+
+%TODO
+Rad je podijeljen u X poglavlja. U svakom je opisano ovo.
+
+%-------------------------------------------------------------------------------
+\chapter{Opis problema}
+\label{opis_problema}
+
+Graf se sastoji od $n$ vrhova i $m$ bridova. Pišemo $G = (V, E)$. Stupanj vrha je definiran kao broj vrhova s kojima je taj vrh susjedan. $\delta$ je
+oznaka za najveći stupanj vrha.
+
+\section{Bojanje grafova}
+Bojanje grafa je postupak pridruživanja boje svakom vrhu grafa tako da dva susjedna vrha nemaju jednaku boju. Graf je $k$-obojiv ako postoji
+bojanje grafa s $k$ ili manje boja. Kromatski broj $\chi(G)$ grafa je najmanji broj boja potreban za obojati graf. U većini primjena,
+dovoljno je obojati graf s dovoljno malim $k$ boja, $k > \chi(G)$.
+
+\subsection{$\delta + 1$ bojanje grafa}
+$\delta + 1$ je jednostavan algoritan bojanja grafa koji oboja graf s najviše $\delta + 1$ bojom. Algoritam je složenosti $O(n^2)$.
+Neka je $\{1, \dots, \delta + 1\}$ skup boja. Svakom vrhu se pridružuje najmanji broj kojim nije obojan ni jedan od njegovih susjeda. Uvijek će postojati
+barem jedna takva boja jer svaki vrh ima najviše $\delta$ susjeda, a postoji $\delta + 1$ boja. Problem ovog algoritma je što je u većini slučajeva 
+kromatski broj grafa puno manji od $\delta + 1$.
+
+\section{Traženje maksimalne klike}
+Klika u grafu je potpuno povezani podgraf. Maksimalna klika (engl. \textit{maximum clique}) je najveći takav podgraf. Broj vrhova u maksimalnoj kliki označavamo s $\omega(G)$.
+Ovaj broj predstavlja donju granicu kromatskog broja grafa, $\omega(G) \leq \chi(G)$.
+
+Lokalno maksimalna klika (engl. \textit{maximal clique, inclusion-maximal}) je klika koja nije podgraf veće klike. Takvoj kliki nije moguće dodati ni jedan
+vrh grafa koji nije dio klike, na način da dobiveni podgraf ostaje klika.
+
+\subsection{Pohlepno traženje lokalno maksimalne klike}
+Jednostavan algoritam za traženje lokalno maksimalne klike započinje s proizvoljnim vrhom $S = \{v\}$. Algoritam iterira po preostalim vrhovima i provjerava ostaje li
+podgraf $S$ klika ako mu pridružimo odabrani vrh $w$. Ako ostaje, vrh pridružimo lokalno maksimalnoj kliki, a u suprotnom ga odbacujemo.
+
+\chapter{Semidefinitno programiranje}
+\label{pog:semidefinitno_programiranje}
+Semidefinitno programiranje (krat. \textit{SDP}) klasa je optimizacijskih problema.
+Standardni oblik problema je:
+
+\begin{equation}
+\begin{split}
+  & min \langle CX \rangle \\
+  t. d. & \langle A_iX \rangle = b_i \\
+        & X = X^T \succeq 0
+\end{split}
+\end{equation}
+pri čemu $ \langle A \rangle = \sum_{i}^{n} a_{i,i} $
+označava trag kvadratne matrice. $X \succeq 0$ označava da je matrica pozitivno semidefinitna.
+
+Dualni problem zadan je s jednadžbama: 
+\begin{equation}
+\begin{split}
+  & min \sum_{i}^{m} b_iy_i \\
+  t.d. & \sum_{i}^{m} A_iy_i + Z = C \\
+      & Z \succeq 0 \\
+\end{split}
+\end{equation}
+
+%TODO to bi trebalo iti neka primjena SDP
+
+\section{Teorija dualnosti}
+U optimizacijskim problemima, razmak dualnosti (engl. \textit{duality gap}) je razlika između optimuma primarnog $p^*$ i dualnog $d^*$ problema, $p^* - d^*$.
+Kažemo da vrijedi slaba dualnost ako je razmak dualnosti veći ili jednak od 0. Jaka dualnost vrijedi ako su optimum primarnog i dualnog problema jednaki, to jest
+ako je razmak dualnosti jednak 0. % TODO layon mi je citat
+
+Za SDP je razmak dualnosti jednak:
+\begin{equation}
+  \begin{split}
+    \langle CX \rangle - b^Ty &= \langle(\sum_{i=1}^{m}A_iy_i + Z)X \rangle - b^Ty \\
+    &= \langle ZX \rangle + \sum_{i=1}^{m}(\langle A_iX \rangle - b_i) y_i \\
+    &= \langle ZX \rangle \geq 0
+  \end{split}
+\end{equation}
+
+Iz ovoga vidimo da za SDP vrijedi slaba dualnost, ali ne nužno i jaka. Prema Slaterovom uvjetu, jaka dualnost je zadovoljena ako postoji rješenje primarnog problema u kojem je
+zadovoljen uvjet $X \succ 0$ i rješenje dualnog problema takvo da vrijedi $Z \succ 0$. %TODO citat za Slaterov uvjet
+
+\section{Metode rješavanja SDP}
+Postoje razne metode rješavanja SDP-a, primjerice elipsoidna metoda i metoda unutarnje točke. Ove metode numerički pronalaze rješenje, obično u polinomnoj složenosti.
+
+\subsection{Metoda unutarnje točke}
+Kao što ime kaže, metoda unutarnje točke započinje s nekom točkom unutar prostora koji zadovoljava uvjete semidefinitnog programa i priližava se optimumu. 
+%TODO ovo treba dosta bolje objasniti ali neda mi se skuziti 
+
+\chapter{Lovászov broj}
+\label{pog:lovaszov_broj}
+Lovászov broj (Lovászova theta funkcija) rješenje je sljedećeg semidefinitnog programa:
+\begin{equation}
+  \begin{split}
+    & \theta = \max \langle JX \rangle \\
+    t.d. & \langle X \rangle = 1 \\
+         & x_{i,j} = 0, \forall (i,j) \in E(G) \\
+         & X=X^T \succeq 0 
+  \end{split}
+\end{equation}
+
+Ovdje J predstavlja $n \times n$ matricu ispunjenu jedinicama.
+
+
+Za Lovászov broj, $ \theta(G) $ vrijedi da je veći od ili jednak broju klike, a manji od ili jednak kromatskom broju grafa, 
+$\omega(G) \leq \theta(G) \leq \chi(G)$. \cite{1055985}
+
+Ovaj program nije teško pretvoriti u standardnu formu. Potrebno je postaviti $C = -J$, $A_1 = I$, $b_1 = 1$,
+$A_i = E_{j,k}, \forall (j,k) \in E(G)$, $b_i = 0, i \in \{2, \dots, m\}$. Ovdje $E_{i,k}$ predstavlja matricu koja sadrži 0 na
+svim mjestima osim na $e_{i,j}$ i $e_{j, i}$ gdje sadrži 1.
+
+
+\chapter{Primjene SDP-a u bojanju grafova}
+\label{pog:primjene_SDP-a_u_bojanju_grafova}
+
+U formulaciji bojanja grafova pomoću SDP-a, vrhovima se pridružuju jedinični vektoru. Vektori pridruženi susjednim vrhovima moraju
+biti udaljeni jedan od drugog.
+
+\begin{definicija}
+  Za graf G=(V, E) s n vrhova i m bridova i realni broj $k \geq 1$, vektorsko k-bojanje je pridruživanje jediničnih
+  vektora $v_i \in \Re^n$ svakom vrhu $i$ grafa G takvih da za svaka dva susjedna vrha $v_{i,j} \in E$ vrijedi:
+  \begin{equation}
+    v_i \cdot v_j \leq - \frac{1}{k-1}
+  \end{equation}
+\end{definicija} \cite{karger1998approximategraphcoloringsemidefinite}
+
+\begin{definicija}
+  Za graf G=(V, E) s n vrhova i m bridova i realni broj $k \geq 1$, matrično k-bojanje je određivanje simetrične pozitivno semidefinitne matrice M,
+  takve da je $m_{i,i} = 1, i \in \{1, \dots, n\}$ i $m_{i,j} = m_{j,i} \leq - \frac{1}{k-1}, (i, j) \in E$.
+\end{definicija}
+
+Matrično k-bojanje i vektorsko k-bojanje su ekvivalentni. Ako je poznato vektorsko k-bojanje, matricu M određuje se tako da se
+element $m_{i,j}$ postavi na skalarni produkt vektora $v_i$ i $v_j$. Ako je poznato matrično k-bojanje, matricu $M$ moguće je faktorizirati
+pomoću dekompozicije svojstvenim vrijednosti (engl. \textit{eigendecomposition}) tako da vrijedi $M = UU^T$. Sada su stupci matrice $U$, jedinični
+vektori koji čine vektorsko k-bojanje grafa. \cite{karger1998approximategraphcoloringsemidefinite}
+
+%TODO ovo je pol teorema iz KMS, cini mi se dovoljno al treba prouciti
+\section{Povezanost vektorskog bojanja grafa i bojanja grafa}
+\begin{theorem}\label{teorem1}
+  Za $k \leq n$, postoji k jediničnih vektora $v_i \in \Re^n$ takvih da je $v_i \cdot v_j = -\frac{1}{k-1}, \forall i \neq j$ 
+
+  \textbf{Dokaz} (iz \cite{karger1998approximategraphcoloringsemidefinite}) Dovoljno je dokazati da ovo vrijedi za k = n, ako je k manji od n
+  $v_{i}[j]$ se postavlja na 0 za sve j > k.
+
+  Konstruirani su vektori $v_1, \dots, v_k$ na sljedeći način:
+
+  \begin{equation}
+    v_i[j] = \begin{cases} -\sqrt{\frac{1}{k(k-1)}} & j \neq i \\ \sqrt{\frac{k-1}{k}} & j = i \end{cases}
+  \end{equation}
+\end{theorem}
+
+\begin{theorem}
+  Svaki k-obojiv graf je i vektorski k-obojiv.
+
+  \textbf{Dokaz} (iz \cite{karger1998approximategraphcoloringsemidefinite}) Graf je uvijek obojiv s $k \leq n$ boja jer je u najgorem slučaju
+  svaki vrh obojan u različitu boju. Svakom vrhu obojanom s $i$-tom bojom, pridružuje se vektor $v_i$ iz \ref{teorem1}.
+\end{theorem}
+
+Iz ovog teorema vidljivo je da je minimalni k za koji je graf vektorski k-obojiv donja granica za kromatski broj grafa.
+
+\section{Formulacija SDP}
+Slijedi SDP formulacija vektorskog bojanja grafa koja minimizira k za koji je graf vektorski k-obojiv.
+
+\begin{equation}
+  \begin{split}
+    & \min \alpha \\
+    t.d. & x_{ii} = 1 \\
+         & x_{ij} \leq \alpha, \forall (i,j) \in E(G) \\
+         & X=X^T \succeq 0 
+  \end{split}
+\end{equation}
+
+Optimalni $\alpha = -\frac{1}{k-1}$. Kako bi problem bio u standardnoj formi, u matrici $X$ uvodi se novi element na dijagonalu tako da
+$x_{n+1,n+1} = \alpha$. Dodatno, uvode se \textit{slack} varijable za uvjete povezane s bridovima. Konačna formulacija problema u standarnoj formi je: 
+
+
+\begin{equation}
+  \begin{split}
+    & \min \langle E_{n+1,n+1}X \rangle \\
+    t.d. & \langle E_{ii}X \rangle = 1 \\
+         & \langle E_{ij}X \rangle - 2 \langle E_{n+1,n+1}X \rangle + \langle E_{n+1+k,n+1+k}X \rangle = 0, \forall (i,j) \in E(G), k \in \{1,\dots,m\} \\
+         & X=X^T \succeq 0 
+  \end{split}
+\end{equation}
+
+\section{Pretvorba vektorskog bojanja u bojanje grafa}
+Rješavanjem SDP-a, dobiva se vektorsko bojanje grafa. Ovo je potrebno pretvoriti u bojanje grafa. Postoji nekoliko algoritma za ovaj problem. Neki od njih su metoda odsijecanja ravninama 
+(engl. \textit{cutting plane method}) i zaokruživanje vektorskim projekcijama.
+
+\subsection{Semibojanja}
+\begin{definicija}
+  k-semibojanje (engl. \textit{k-semicoloring}) grafa G je pridruživanje k boja barem polovici vrhova grafa G tako da dva susjedna vrha nisu jednake boje. 
+\end{definicija}
+
+\subsection{Metoda odsijecanja ravninama}
+Motivacija iza korištenja algoritma je činjenica da su vektori koji predstavljaju susjedne vrhove udaljeni u prostoru, to jest velik je kut između njih. U algoritmu 
+
+\subsection{Zaokruživanje vektorskim projekcijama}
+
+\chapter{Primjene SDP-a u traženju maksimalne klike}
+\label{pog:primjene_SDP-a_u_traženju_maksimalne_klike}
+
+\chapter{Programska ostvarenja}
+\label{pog:programska_ostvarenja}
+\section{Bojanje grafova}
+\section{Traženje maksimalne klike}
+
+
+%-------------------------------------------------------------------------------
+\chapter{Rezultati i rasprava}
+\label{pog:rezultati_i_rasprava}
+
+\chapter{Upute za prevođenje i pokretanje}
+\label{pog:upute_za_prevođenje_i_pokretanje}
+
+%--- ZAKLJUČAK / CONCLUSION ----------------------------------------------------
+\chapter{Zaključak}
+\label{pog:zakljucak}
+
+
+%--- LITERATURA / REFERENCES ---------------------------------------------------
+
+% Literatura se automatski generira iz zadane .bib datoteke / References are automatically generated from the supplied .bib file
+% Upiši ime BibTeX datoteke bez .bib nastavka / Enter the name of the BibTeX file without .bib extension
+\bibliography{literatura}
+
+
+
+%--- SAŽETAK / ABSTRACT --------------------------------------------------------
+
+% Sažetak na hrvatskom
+\begin{sazetak}
+  Unesite sažetak na hrvatskom.
+
+\end{sazetak}
+
+\begin{kljucnerijeci}
+  prva ključna riječ; druga ključna riječ; treća ključna riječ
+\end{kljucnerijeci}
+
+
+% Abstract in English
+\begin{abstract}
+  Enter the abstract in English.
+  
+\end{abstract}
+
+\begin{keywords}
+  the first keyword; the second keyword; the third keyword
+\end{keywords}
+
+
+%--- PRIVITCI / APPENDIX -------------------------------------------------------
+
+% Sva poglavlja koja slijede će biti označena slovom i riječi privitak / All following chapters will be denoted with an appendix and a letter
+\backmatter
+
+\end{document}
