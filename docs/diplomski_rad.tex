@@ -1,17 +1,18 @@
 \documentclass[diplomskirad]{fer}
 % Dodaj opciju upload za generiranje konačne verzije koja se učitava na FERWeb
 % Add the option upload to generate the final version which is uploaded to FERWeb
+\usepackage{subcaption}
 
 %--- PODACI O RADU / THESIS INFORMATION ----------------------------------------
 
 \newtheorem{definicija}{Definicija}
 \newtheorem{theorem}{Teorem}[chapter]
+\newtheorem{algoritam}{Algoritam}
 % Naslov na engleskom jeziku / Title in English
 \title{Semidefinite programming relaxation for graph coloring and maximum clique number}
 
 % Naslov na hrvatskom jeziku / Title in Croatian
-\naslov{Relaksacije semidefinitnog programiranja za probleme bojanja grafova i
-maksimalne klike}
+\naslov{Relaksacije semidefinitnog programiranja za probleme bojanja grafova i maksimalne klike}
 
 % Broj rada / Thesis number
 \brojrada{819}
@@ -92,6 +93,7 @@ bojanje grafa s $k$ ili manje boja. Kromatski broj $\chi(G)$ grafa je najmanji b
 dovoljno je obojati graf s dovoljno malim $k$ boja, $k > \chi(G)$.
 
 \subsection{$\delta + 1$ bojanje grafa}
+\label{delta1}
 $\delta + 1$ je jednostavan algoritan bojanja grafa koji oboja graf s najviše $\delta + 1$ bojom. Algoritam je složenosti $O(n^2)$.
 Neka je $\{1, \dots, \delta + 1\}$ skup boja. Svakom vrhu se pridružuje najmanji broj kojim nije obojan ni jedan od njegovih susjeda. Uvijek će postojati
 barem jedna takva boja jer svaki vrh ima najviše $\delta$ susjeda, a postoji $\delta + 1$ boja. Problem ovog algoritma je što je u većini slučajeva 
@@ -105,6 +107,7 @@ Lokalno maksimalna klika (engl. \textit{maximal clique, inclusion-maximal}) je k
 vrh grafa koji nije dio klike, na način da dobiveni podgraf ostaje klika.
 
 \subsection{Pohlepno traženje lokalno maksimalne klike}
+\label{pog:greedy_clique}
 Jednostavan algoritam za traženje lokalno maksimalne klike započinje s proizvoljnim vrhom $S = \{v\}$. Algoritam iterira po preostalim vrhovima i provjerava ostaje li
 podgraf $S$ klika ako mu pridružimo odabrani vrh $w$. Ako ostaje, vrh pridružimo lokalno maksimalnoj kliki, a u suprotnom ga odbacujemo.
 
@@ -245,7 +248,7 @@ Optimalni $\alpha = -\frac{1}{k-1}$. Kako bi problem bio u standardnoj formi, u 
 $x_{n+1,n+1} = \alpha$. Dodatno, uvode se \textit{slack} varijable za uvjete povezane s bridovima. Konačna formulacija problema u standarnoj formi je: 
 
 
-\begin{equation}
+\begin{equation} \label{sdpbojanje}
   \begin{split}
     & \min \langle E_{n+1,n+1}X \rangle \\
     t.d. & \langle E_{ii}X \rangle = 1 \\
@@ -263,23 +266,408 @@ Rješavanjem SDP-a, dobiva se vektorsko bojanje grafa. Ovo je potrebno pretvorit
   k-semibojanje (engl. \textit{k-semicoloring}) grafa G je pridruživanje k boja barem polovici vrhova grafa G tako da dva susjedna vrha nisu jednake boje. 
 \end{definicija}
 
+Ako je poznato k-semibojanje grafa, tada je moguće obojati cijeli graf u $k\log n$ boja. Ovo je moguće rekurzivnim bojanjem barem polovice preostalog grafa,
+sve dok ne ostane 0 ili 1 neobojan vrh.
+
 \subsection{Metoda odsijecanja ravninama}
-Motivacija iza korištenja algoritma je činjenica da su vektori koji predstavljaju susjedne vrhove udaljeni u prostoru, to jest velik je kut između njih. U algoritmu 
+Motivacija iza korištenja algoritma je činjenica da su vektori koji predstavljaju susjedne vrhove udaljeni u prostoru, to jest velik je kut između njih.
+Generira se $N$ slučajnih hiperravnina koje prolaze kroz ishodište koordinatnog sustava. One dijele prostor na $2N$ dijelova. Svakom dijelu je pridružena
+jedna boja te su svi vektori u tom dijelu obojani jednom bojom. Ukoliko su dva susjedna vrha obojana istom bojom, jednom od tih vrhova treba maknuti boju.
+
+%TODO mozda ovdje bolje citirati layon ili nekog drugog, pa sljedeci section KMS
+Vjerojatnost da su 2 susjedna vrha s različitih strana jedne hiperravnine je $\beta / \Pi$, gdje je $\beta$ kut između vektorskih reprezentacija
+tih vektora. Za veći broj hiperravnina, smanjuje se vjerojatnost da su vrhovi u jednakim podprostorima. Ovo vrijedi za sve vrhove, a ne samo za susjedne.
+Budući da susjedni vektori imaju veliki kuti između vektorskih reprezentacija, oni imaju manju vjerojatnost da se nalaze u jednakim podprostisteorima.
+Promijenom parametra $N$ bira se između točnog bojanja većeg broja vrhova za veći $N$ i bojanja s manjim brojem boja za manji $N$. \cite{karger1998approximategraphcoloringsemidefinite} 
+
 
 \subsection{Zaokruživanje vektorskim projekcijama}
+\label{pog_vektorske_projekcije}
+U ovom algoritmu, traže se veliki podgrafe koji u kojima ni jedan vrh nije međusobno povezan. Zadovoljavajuće je pronaći podgraf s N vrhova i m bridova,
+gdje je $N >> m$ te izbaciti m vrhova koji su imaju susjedne vrhove u podgrafu. Ovih $N - m$ vrhova možemo obojati jednom bojom.
 
+\begin{algoritam} Bojanje grafa vektorskim projekcijama
+  \begin{enumerate}
+    \item generiranje slučajnog vektora \textbf{u} po standardnoj distribuciji i normaliziracija
+    \item ako je $|v_i \cdot u| > \epsilon$, dodavanje vrha $i$ u trenutni skup vrhova 
+    \item provjera nalaze li se bridovi u dobivenom podgrafu i izbacivanje potrebnih vrhova iz skupa
+    \item bojanje trenutnog skupa vrhova u jednu boju
+    \item ponavljanje preostalih vrhova dok nisu svi obojani
+  \end{enumerate}
+\end{algoritam}
+
+Intuitivno, ako je jedan od vektora $v_i$ blizu slučajnom vektoru $u$, tada njegovi susjedni vektori $v_j$ koji su udaljeni od vektora $v_i$, vjerojatno
+udaljeni i od vektora $u$. Promijenom parametra $\epsilon$ utječemo na broj obojenih vektora u jednom koraku, ali i broj \textit{uhvaćenih} bridova.
+  
 \chapter{Primjene SDP-a u traženju maksimalne klike}
 \label{pog:primjene_SDP-a_u_traženju_maksimalne_klike}
 
+Stabilan skup (engl. \textit{stable set}) je podskup vrhova grafa G koji ne sadržava dva susjedna vrha. Inverzni graf $\bar{G}$ grafu $G$ 
+sastoji se od jednakog skupa vrhova kao i graf $G$. Vrhovi $v_i$ i $v_j$ u grafu $\bar{G}$ su povezani ako i samo ako nisu povezani u grafu $G$.
+
+Skup vrhova S je klika u grafu $G$ ako i samo ako je stablian skup u grafu $\bar{G}$. Dakle, problem maksimalne klike grafa G je ekvivalentan
+problemu maksimalnog stabilnog skupa grafa $\bar{G}$. \cite{article}
+
+U nastavku je opisana metoda pronalska maksimalnog stabilnog skupa.
+
+\section{SDP formulacija problema maksimalnog stabilnog skupa}
+Svakom vrhu grafa pridjeljuje se vrijednost $-1$ ili $1$. Jedan od ovih skupova predstavlja stabilan skup. Grafu se dodaje jedan vrh $v_{n+1}$ koji
+nije povezan ni s jednim vrhovom grafa G. Ovaj vrh se očito nalazi u maksimalnom stabilnom skupu. Ovaj vrh će služiti prepoznavanju koji od skupova
+je stabilan skup.
+
+Problem je definiran na sljedeći način(iz \cite{article}):
+\begin{equation}
+  \begin{split}
+    & \max \frac{1}{2} \sum_{i=1}^{n} (v_i^2+v_{n+1}v_{i}) \\
+    t.d. & v \in \{-1, 1\}^{n+1} \\
+         & |v_i+v_j+v_{n+1}| = 1 \forall (i, j) \in E
+  \end{split}   
+\end{equation}
+
+Izraz $v_i^2+v_{n+1}v_{i}$ je jednak 0 ako je $v_i$ različitog predznaka kao i $v_{n+1}$ ili jednak 2 ako je $v_i$ jednakog predznaka kao i $v_{n+1}$.
+Što znači da je vrijednost optimizacijske funkcije jednaka broju vrhova u maksimalnom stabilnom skupu.
+
+Problem se relaksira u SDP na sljedeći način (iz \cite{article}):
+%TODO možda bi svugdje trebalo zameniti ovaj langle jer tu grozno zgleda
+\begin{equation} \label{eq1}
+  \begin{split}
+    & \max \Biggl \langle \begin{bmatrix}
+      .5 & & & .25 \\
+      & \ddots &  & \vdots \\
+      & & .5 & .25 \\
+      .25 & \cdots & .25 & 0
+    \end{bmatrix} X \Biggr \rangle \\
+    t.d. & diag(X) = e \\
+    &  \langle (e_{ijk} e_{ijk}^T) X \rangle = 1 \\
+    & X = X^T \succeq 0 
+  \end{split}
+\end{equation}
+
+Iz relaksiranog problema dobiva se stabilni skup prateći sljedeći algoritam:
+\begin{algoritam} Određivanje maksimalnog stabilnog skupa
+  \label{maks_clique}
+  \begin{enumerate}
+    \item Iz optimalnog $X^*$ dobivenog iz \ref{eq1} određuje se V za koji vrijedi $X^* = V^TV$
+    \item Za slučajan jedinični vektor $u \in \Re^{n+1}$ računa se $v = sign(V^Tu)$
+    \item Za svaki $(i,j) \in E$, ako ne vrijedi $|v_i+v_j+v_{n+1}| = 1$, mijenja se prednjak od $v_i$ ili $v_j$, ono koji je udaljeniji
+        od vektora $v_{n+1}$
+  \end{enumerate}
+\end{algoritam}
+
+Stabilan skup vrhova je onaj skup vrhova koji imaju jednaki predznak kao i $v_{n+1}$.
+
 \chapter{Programska ostvarenja}
 \label{pog:programska_ostvarenja}
-\section{Bojanje grafova}
-\section{Traženje maksimalne klike}
 
+U sklopu rada implementiran je algoritam za bojanje grafova i traženje maksimalne klike.
+Ostvaren je izračun Lovászove theta funkcije. %TODO ovo nije napravljeno
+Implementiran je program za vizualizaciju grafa i program za generiranje slučajnih grafova.
+
+Sav kod napisan je u C++-u uz korištenje biblioteke DSDP \cite{dsdp-user-guide} i OpenBLAS implementacije BLAS/LAPACK standarda \cite{openBLAS}. %TODO je standard prava rec
+
+%TODO klasa ucitava podatke, ovak su spremljene stvari, postoje ove funkcije
+
+\section{Bojanje grafova}
+Implementirana su dva algoritma za bojanje grafova: SDP relaksacijom uz zaokruživanje vektorskim projekcijama i $\delta + 1$ algoritmom.
+
+$\delta + 1$ algoritam je implementiran kao što je objašnjeno u poglavlju \ref{delta1}.
+
+Za bojanje zaokruživanjem vektorskih projekcijama problem \ref{sdpbojanje} rješenje je korištenjem biblioteke DSDP \cite{dsdp-user-guide}.
+Korištenjem ove biblioteke dobivena je optimalna matrica $X$ koja je faktorizirana u oblik $VV^T$ koji predstavlja vektorsko bojanje korištenjem
+OpenBLAS-a \cite{openBLAS}.
+
+Graf je dalje obojan kako je opisano u poglavlju \ref{pog_vektorske_projekcije}.
+
+\subsection{Primjer bojanja grafa}
+Zaokruživanje vektorskim projekcijama objašnjeno je na grafu G s tablicom susjednih vrhova \ref{matrica_susjeda}. U ovom zapisu,
+jedinica predstavlja da postoji brid između dva vrha, dok nula predstavlja da vrhovi nisu povezani.
+Na slici \ref{grafG} prikazan je graf G s oznakama vrhova
+0, \dots, 9.
+
+\begin{equation} \label{matrica_susjeda}
+   G =\begin{pmatrix}
+    1 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 0 & 1 \\
+    0 & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 1 & 0 \\
+    0 & 1 & 0 & 0 & 1 & 0 & 1 & 1 & 1 & 0 \\
+    0 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 \\
+    1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+    1 & 0 & 1 & 0 & 0 & 1 & 0 & 0 & 1 & 1 \\
+    0 & 1 & 1 & 0 & 0 & 1 & 0 & 1 & 0 & 1 \\
+    1 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 \\
+  \end{pmatrix}
+\end{equation}
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.4]{images/colors_it2.png}
+  \caption{Prikaz grafa G}
+  \label{grafG}
+\end{figure}
+
+U tablici \ref{vekt_bojanje} prikazano je vektorsko bojanje grafa G koje se dobiva rješavanjem pripadajućeg SDP-a.
+U tablici \ref{sluc_vekt} prikazani su slučajni vektori generirani u postupku bojanja grafa G zaokruživanjem vektorskim projekcijama.
+U tablici \ref{skalar} prikazani su skalarni umnošci iterativno generiranih slučajnih vektora s vektorima pripadajućih vrhova grafa G.
+Vrijednost parametra $\epsilon = 0.0$. U prvom koraku vrhovi 6, 7 i 8 imaju skalarni produkt $>\epsilon$. Budući da su vrhovi 7 i 8 susjedni, 
+vrh 8 nije obojan. Na slici \ref{prvo_bojanje}, prikazan je graf nakon prve iteracije bojanja.
+
+U drugom koraku, vrhovi 2, 3, 4, 8 i 9 imaju skalarni produkt $>\epsilon$. Vrhovi 4 i 8 nisu obojani jer postoje bridovi (2, 4), (4, 9) i (8, 9).
+Slika \ref{drugo_bojanje}, prikazuje graf G nakon druge iteracije bojanja.
+
+U trećoj iteraciji, vrhovi 0, 1, 4 i 8 imaju pozitivni skalarni produkt. Vrh 8 nije obojan zato što postoji brid (1, 8). Na slici \ref{trece_bojanje}
+prikazan je graf G nakon trećeg koraka algoritma bojanja grafa.
+
+Ostali su vrhovi 5 i 8 koji su povezani pa su oni obojani različitim bojama u sljedeće dvije iteracije algoritma. Na slici \ref{zadnje_bojanje}
+prikazan je potpuno obojan graf G.
+
+\begin{table}[h]
+  \caption{Vektorsko bojanje grafa G}
+  \label{vekt_bojanje}
+  \centering
+  \resizebox{\columnwidth}{!}{
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+    \hline
+    i & $v_{i,0}$ & $v_{i,1}$ & $v_{i,2}$ & $v_{i,3}$ & $v_{i,4}$ & $v_{i,5}$ & $v_{i,6}$ & $v_{i,7}$ & $v_{i,8}$ & $v_{i,9}$ \\
+    \hline
+    \hline
+    0 & 0.000 & 0.226 & -0.253 & 0.113 & -0.340 & 0.0680 & 0.286 & 0.342 & 0.627 & 0.401 \\
+    \hline
+    1 & 0.000 & -0.191 & -0.174 & 0.475 & -0.024 & 0.026 & 0.387 & 0.410 & -0.364 & -0.506 \\
+    \hline
+    2 & 0.000 & -0.174 & -0.387 & -0.276 & 0.069 & -0.003 & -0.232 & 0.153 & -0.300 & 0.756 \\
+    \hline
+    3 & 0.000 & -0.021 & -0.043 & 0.518 & -0.041 & 0.273 & -0.657 & -0.327 & 0.218 & 0.259 \\
+    \hline
+    4 & 0.000 & 0.037 & -0.126 & -0.126 & 0.539 & 0.570 & 0.084 & 0.075 & 0.404 & -0.419 \\
+    \hline
+    5 & -0.010 & -0.042 & 0.207 & 0.070 & 0.204 & -0.116 & -0.198 & 0.806 & 0.278 & 0.358 \\
+    \hline
+    6 & 0.000 & 0.151 & -0.236 & 0.057 & 0.258 & -0.564 & -0.355 & 0.056 & 0.046 & -0.634 \\
+    \hline
+    7 & -0.010 & 0.017 & -0.076 & -0.223 & -0.425 & 0.270 & -0.301 & 0.107 & -0.244 & -0.728 \\
+    \hline
+    8 & -0.010 & -0.174 & -0.087 & -0.003 & 0.006 & -0.218 & 0.257 & -0.591 & 0.705 & -0.049 \\
+    \hline
+    9 & -0.010 & 0.192 & -0.048 & 0.158 & 0.216 & 0.062 & 0.245 & -0.320 & -0.741 & 0.416 \\
+    \hline
+  \end{tabular}
+  }
+\end{table}
+
+\begin{table}[h]
+ \caption{Generirani slučajni vektori $r_i$}
+ \label{sluc_vekt}
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+    \hline
+    i & $r_{i,0}$ & $r_{i,1}$ & $r_{i,2}$ & $r_{i,3}$ & $r_{i,4}$ & $r_{i,5}$ & $r_{i,6}$ & $r_{i,7}$ & $r_{i,8}$ & $r_{i,9}$ \\
+    \hline
+    \hline
+    0 & 0.057 & -0.219 & 0.846 & 0.061 & 0.000 & -0.252 & -0.052 & -0.254 & 0.039 & -0.312 \\
+    \hline
+    1 & -0.556 & -0.436 & 0.246 & -0.042 & 0.191 & 0.479 & 0.225 & -0.270 & 0.124 & 0.186 \\
+    \hline
+    2 & -0.260 & 0.172 & -0.272 & 0.320 & 0.250 & 0.643 & 0.159 & -0.395 & 0.261 & -0.039 \\
+    \hline
+    3 & 0.195 & -0.327 & 0.190 & -0.060 & -0.415 & -0.060 & -0.229 & 0.603 & 0.460 & -0.105 \\
+    \hline
+    4 & -0.011 & 0.019 & 0.732 & 0.432 & -0.015 & -0.312 & 0.146 & -0.000 & 0.289 & 0.274\\
+    \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[h]
+  \caption{Umnošci slučajnih vektora s vektorima vrhova}
+  \label{skalar}
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+    \hline
+    i & $r_i \cdot v_0 $ & $r_i \cdot v_1 $ & $r_i \cdot v_2 $ & $r_i \cdot v_3 $ & $r_i \cdot v_4 $ & $r_i \cdot v_5 $ & $r_i \cdot v_6 $ & $r_i \cdot v_7 $ & $r_i \cdot v_8 $ & $r_i \cdot v_9 $ \\
+    \hline
+    \hline
+    0 & -0.476 & -0.063 & -0.580 & -0.024 & -0.143 & -0.078 & 0.117 & 0.056 & 0.199 & -0.179 \\
+    \hline
+    1 & -0.073 & -0.135 & 0.014 & 0.115 & 0.304 & -0.107&& & 0.252 & 0.102 \\
+    \hline
+    2 & 0.161 & 0.002 & & & 0.607 & -0.353 & & & 0.316 & \\
+    \hline
+    3 & & & & & & 0.591 & & & -0.037 & \\
+    \hline
+    4 & & & & & & & & & 0.228 & \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}[b]{0.4\linewidth}
+    \includegraphics[scale=0.17]{images/colors_it3.png}
+    \subcaption{Graf G nakon prve iteracije bojanja}
+    \label{prvo_bojanje}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\linewidth}
+    \includegraphics[scale=0.17]{images/colors_it4.png}
+    \subcaption{Graf G nakon druge iteracije bojanja}
+    \label{drugo_bojanje}
+  \end{subfigure}
+  \bigskip
+  \begin{subfigure}[b]{0.4\linewidth}
+    \includegraphics[scale=0.17]{images/colors_it5.png}
+    \caption{Graf G nakon trece iteracije bojanja}
+    \label{trece_bojanje}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\linewidth}
+    \includegraphics[scale=0.17]{images/colors_it7.png}
+    \caption{Konačno bojanje grafa G}
+    \label{zadnje_bojanje}
+  \end{subfigure}
+  \caption{Koraci bojanja grafa G}
+\end{figure}
+
+\newpage
+\section{Traženje maksimalne klike}
+U sklopu rada implementirane su dvije metode traženja maksimalne klike grafa: pohlepno traženje lokalno maksimalne klike kao što je opisano u poglavlju
+\ref{pog:greedy_clique} i SDP relaksacijom definiranom u \ref{eq1} pomoću algoritma \ref{maks_clique}. Za graf je određen njegov inverzni graf kojem se
+određuje stabilni skup koji je zapravo klika u početnom grafu.
+
+\subsection{Primjer traženja maksimalne klike}
+Na slici \ref{fig:klika} prikazana je klika dobivena algoritmom \ref{maks_clique} za graf G prikaz na slici \ref{grafG}. Klika sadrži vrhove 5, 7, 8 i 9.
+Ovo klika je ujedno i maksimalna klika grafa G.
+
+%TODO mislim da sam mozda zamenila V i V^T
+U tablici \ref{vekt_clique} prikaza je matrica $V$ koja je dobivena faktorizacijom optimalnog rješenje SDP-a \ref{eq1} za graf G. Prema algoritnu \ref{maks_clique}
+generira se slučajan vektor r koju je zapisan u tablici \ref{table_clique_r}. Zatim se računa umnožak matrice $V$ i vektora $r$ te se određuje predznak
+svakog elementa vektora umnoška. Ovi predznaci su zapisani u tablici \ref{table_clique_sign}. Za graf G elementi na mjestima 5, 7, 8 i 9 imaju jednaki predznak ($-1$)
+kao i dodatan element 10 te oni čine potencijalnu kliku. Provjerom vidimo da svi potrebni bridovi postoje te dobivamo kliku koja je prikazana na slici \ref{fig:klika}.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.4]{images/max_clique.png}
+  \caption{Klika graf G}
+  \label{fig:klika}
+\end{figure}
+
+%TODO mislim da sam mozda zamenila V i V^T
+\begin{table}[h]
+  \caption{Faktorizacija $V$ optimalnog rješenja SDP relaksacije za graf G}
+  \label{vekt_clique}
+  \centering
+  \resizebox{\columnwidth}{!}{
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+    \hline
+    i & $V_{i,0}$ & $V_{i,1}$ & $V_{i,2}$ & $V_{i,3}$ & $V_{i,4}$ & $V_{i,5}$ & $V_{i,6}$ & $V_{i,7}$ & $V_{i,8}$ & $V_{i,9}$ & $V_{i,10}$ \\
+    \hline
+    \hline
+    0 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & -1.000 & 1.000 & -1.000 & -1.000 & -1.000 & -1.000 \\
+    \hline
+    1 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & -1.000 & 1.000 & -1.000 & -1.000 & -1.000 & -1.000 \\
+    \hline
+    2 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & -1.000 & 1.000 & -1.000 & -1.000 & -1.000 & -1.000 \\
+    \hline
+    3 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & -1.000 & 1.000 & -1.000 & -1.000 & -1.000 & -1.000 \\
+    \hline
+    4 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & -1.000 & 1.000 & -1.000 & -1.000 & -1.000 & -1.000 \\
+    \hline
+    5 & -1.000 & -1.000 & -1.000 & -1.000 & -1.000 & 1.000 & -1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
+    \hline
+    6 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & -1.000 & 1.000 & -1.000 & -1.000 & -1.000 & -1.000 \\
+    \hline
+    7 & -1.000 & -1.000 & -1.000 & -1.000 & -1.000 & 1.000 & -1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
+    \hline
+    8 & -1.000 & -1.000 & -1.000 & -1.000 & -1.000 & 1.000 & -1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
+    \hline
+    9 & -1.000 & -1.000 & -1.000 & -1.000 & -1.000 & 1.000 & -1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
+    \hline
+    10 & -1.000 & -1.000 & -1.000 & -1.000 & -1.000 & 1.000 & -1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
+    \hline
+  \end{tabular}
+  }
+\end{table}
+
+\begin{table}
+  \caption{Slučajan vektor r}
+  \label{table_clique_r}
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}
+    \hline
+    $r_0$ & $r_1$ & $r_2$ & $r_3$ & $r_4$ & $r_5$ & $r_6$ & $r_7$ & $r_8$ & $r_9$ & $r_{10}$\\
+    \hline
+    \hline
+    0.265 & 0.335 & 0.636 & 0.362 & 0.176 & 0.064 & -0.016 & 0.132 & 0.049 & 0.290 & -0.378 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+%TODO mislim da sam mozda zamenila V i V^T
+\begin{table}
+  \caption{Predznak umnoška matrice V i vektora r}
+  \label{table_clique_sign}
+  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+    \hline
+    $r \cdot v_0$ & $r \cdot v_1$ & $r \cdot v_2$ & $r \cdot v_3$ & $r \cdot v_4$ & $r \cdot v_5$ & $r \cdot v_6$ & $r \cdot v_7$ & $r \cdot v_8$ & $r \cdot v_9$ & $r \cdot v_{10}$ \\
+    \hline
+    \hline
+    1 & 1 & 1 & 1 & 1 & -1 & 1 & -1 & -1 & -1 & -1 \\
+    \hline
+  \end{tabular}
+\end{table}
 
 %-------------------------------------------------------------------------------
 \chapter{Rezultati i rasprava}
 \label{pog:rezultati_i_rasprava}
+
+Za potrebe testiranja napravljen je jednostavan generator slučajnih grafova. Za definirane parametre $n \in \mathbb{N}$ i $p \in [0,1]$, generira
+se graf s $n$ vrhova. Bridovi se generiraju slučajno, za svaki brid je vjerojatnost generiranja $p$. Graf je spremljen u datoteku u obliku 
+matrice susjedstva. Generiran je po jedan graf za sve $n \in \{5, 10, \dots, 40, 45\}$ i sve $p \in \{0, 0.05, \dots, 0.9, 0.95\}$.
+
+Svi generirani grafovi obojani su $\delta + 1$ algoritmom i algoritmom zaokruživanja vektorskim projekcijama uz $\epsilon \in \{-0.2, 0, 0.2\}$.
+Za algoritam zaokruživanja vektorskim projekcijama, rezultati su izračunati 3 puta te je uzeta najbolja vrijednost. Za svaki algoritam su izračunati prosjeci po
+parametru $n$ koji su prikazani u tablici \ref{table:bojanje_n}. Iz tablice vidimo da algoritam zaokruživanja vektorskim projekcijama daje najbolje rezultate za $\epsilon = -0.2$, a
+najgore za $\epsilon = 0.2$. Algoritam zaokruživanja vektorskim projekcijama za $\epsilon = -0.2$ i $\delta + 1$ bojanje daju otprilike jednake rezultate. Zanimljivo je primjetiti
+da $\delta + 1$ algoritam boja graf s puno manje od $\delta$ boja, pogotovo za veliki $n$.
+
+U
+
+Određen su klike pohlepnim pronalaskom lokalno maksimalne klike i pronalaskom SDP relaksacijom. 
+
+\begin{table}
+  \caption{Broj boja po algoritmu po n}
+  \label{table:bojanje_n}
+  \begin{tabular}{|c|c|c|c|c|c|}
+    \hline
+    n & $\delta +1$ bojanje & SDP bojanje $\epsilon = -0.2$& SDP bojanje $\epsilon = 0$ & SDP bojanje $\epsilon = 0.2$ & $\delta$ \\
+    \hline
+    \hline
+      5 & 2.85 & 2.85 & 3.25 & 3.45 & 3.05 \\
+      \hline
+      10 & 4.25 & 4.35 & 4.8 & 5.85 & 6.45 \\
+      \hline
+      15 & 5.95 & 5.65 & 6.2 & 8.1 & 9.65 \\
+      \hline
+      20 & 7.2 & 6.9 & 7.8 & 10.1 & 12.65 \\
+      \hline
+      25 & 8.1 & 8.4 & 9.4 & 13.15 & 15.5 \\
+      \hline
+      30 & 9.6 & 10.75 & 11.45 & 16.3 & 19 \\
+      \hline
+      35 & 10.6 & 10.85 & 12.8 & 18.75 & 21.5 \\
+      \hline
+      40 & 12 & 12.3 & 13.65 & 22.05 & 24.35 \\
+      \hline
+      45 & 12.65 & 13.2 & 15.05 & 24.55 & 27 \\
+      \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}
+  \caption{Broj boja po algoritmu po p}
+  \label{table:bojanje_p}
+  \begin{tabular}{|c|c|c|c|c|c|}
+    \hline
+     & $\delta +1$ bojanje & SDP bojanje $\epsilon = -0.2$& SDP bojanje $\epsilon = 0$ & SDP bojanje $\epsilon = 0.2$ & $\delta$ \\
+    \hline
+    \hline
+    
+  \end{tabular}
+\end{table}
 
 \chapter{Upute za prevođenje i pokretanje}
 \label{pog:upute_za_prevođenje_i_pokretanje}

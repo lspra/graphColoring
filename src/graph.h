@@ -12,16 +12,23 @@
 class Graph {
   public:
     Graph(std::string filepath, int type);
+    ~Graph();
     void print();
-    void color();
-    void greedy_color();
-    void find_max_clique();
+    int color(int* colors, double delta);
+    int greedy_color(int* colors);
+    int find_max_clique(int* clique);
+    int greedy_clique(int* clique);
+    double lovasz();
+    void color_init(int* colors);
+    double get_delta();
+    unsigned next_color(int* colors, int nc, unsigned colored, double delta);
+    unsigned int n, m, m_;
+    std::vector<int> edges[N];
 
   private:
-    unsigned int n, m, maxr_ind;
+    unsigned int maxr_ind;
     double maxr = 0.0;
     double k;
-    std::vector<int> edges[N];
     std::vector<int> not_edges[N];
 
     std::random_device rd;
@@ -30,10 +37,10 @@ class Graph {
     double values[2][3];
     int indices[2*N][3];
     double* vecColoring;
-    int colors[N];
+    bool vecColor = 0;
 
     void load_adjecency(std::ifstream& fs);
     void vector_color();
-    void check_colors_valid();
-    void check_clique_valid(int* clique, int len);
+    bool check_colors_valid(int* color, int len);
+    bool check_clique_valid(int* clique, int len);
 };

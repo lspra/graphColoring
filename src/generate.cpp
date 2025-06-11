@@ -33,7 +33,7 @@ void generate_graph(int n, double p) {
 }
 
 int main() {
-  for(int n = 5; n < 1000; n+=5) {
+  for(int n = 5; n < 100; n+=5) {
     for(double p = 0; p < 1; p+=0.05) {
       generate_graph(n, p);
     }
