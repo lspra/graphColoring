@@ -44,7 +44,7 @@ int main() {
   }
 
   std::ofstream file;
-  file.open("examples/results_by_n1");
+  file.open("examples/results_by_n");
   
   int sum1[20] = {0}, sum2[20] = {0}, sum3[20] = {0}, sum4[20] = {0}, sum5[20] = {0}, sum6[20] = {0};
   double sum7[20] = {0};
@@ -76,7 +76,7 @@ int main() {
 
   {
     std::ofstream file;
-    file.open("examples/results_by_p1");
+    file.open("examples/results_by_p");
     
     memset(sum1, 0, 20*sizeof(int));
     memset(sum2, 0, 20*sizeof(int));

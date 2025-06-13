@@ -16,4 +16,4 @@
 *.blg
 *.synctex*
 *latexmk
-*examples/random_prob*
+*examples*
