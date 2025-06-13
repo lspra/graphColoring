@@ -10,7 +10,6 @@ int colors_sdp2[19][20];
 int colors_sdp3[19][20];
 int clique_greedy[19][20];
 int clique_sdp[19][20];
-int lovazs[19][20];
 double delta[19][20];
 
 void test_graph(int n, double p) {
@@ -34,7 +33,6 @@ void test_graph(int n, double p) {
     min1 = MAX(min1, graph.find_max_clique(array));
   }
   clique_sdp[ind_n][ind_p] = min1;
-  lovazs[ind_n][ind_p] = graph.lovasz();
   delta[ind_n][ind_p] = graph.get_delta();
 }
 
@@ -46,18 +44,17 @@ int main() {
   }
 
   std::ofstream file;
-  file.open("examples/results_by_n");
+  file.open("examples/results_by_n1");
   
-  int sum1[19] = {0}, sum2[19] = {0}, sum3[19] = {0}, sum4[19] = {0}, sum5[19] = {0}, sum6[19] = {0}, sum7[19] = {0};
-  double sum8[19] = {0};
-  memset(sum1, 0, 19*sizeof(int));
-  memset(sum2, 0, 19*sizeof(int));
-  memset(sum3, 0, 19*sizeof(int));
-  memset(sum4, 0, 19*sizeof(int));
-  memset(sum5, 0, 19*sizeof(int));
-  memset(sum6, 0, 19*sizeof(int));
-  memset(sum7, 0, 19*sizeof(int));
-  memset(sum8, 0, 19*sizeof(double));
+  int sum1[20] = {0}, sum2[20] = {0}, sum3[20] = {0}, sum4[20] = {0}, sum5[20] = {0}, sum6[20] = {0};
+  double sum7[20] = {0};
+  memset(sum1, 0, 20*sizeof(int));
+  memset(sum2, 0, 20*sizeof(int));
+  memset(sum3, 0, 20*sizeof(int));
+  memset(sum4, 0, 20*sizeof(int));
+  memset(sum5, 0, 20*sizeof(int));
+  memset(sum6, 0, 20*sizeof(int));
+  memset(sum7, 0, 20*sizeof(int));
   for(int n = 5; n < 50; n+=5) {
     int ind_n = n/5 -1;
     for(double p = 0; p < 1; p+=0.05) {
@@ -68,27 +65,26 @@ int main() {
       sum4[ind_n] += colors_sdp3[ind_n][ind_p];
       sum5[ind_n] += clique_greedy[ind_n][ind_p];
       sum6[ind_n] += clique_sdp[ind_n][ind_p];
-      sum7[ind_n] += lovazs[ind_n][ind_p];
-      sum8[ind_n] += delta[ind_n][ind_p];
-    }
-    file << n << " " << sum1[ind_n] / 20.  << " " << sum2[ind_n] / 20. 
-      << " " << sum3[ind_n] / 20.  << " " << sum4[ind_n] / 20.  << " " << sum5[ind_n] / 20. << " " << sum6[ind_n] / 20.
-      << " " << sum7[ind_n] / 20. << " " << sum8[ind_n] / 20. << std::endl;
+      sum7[ind_n] += delta[ind_n][ind_p];
+     }
+    file << n << " " << sum1[ind_n] / 20.  << " " << sum2[ind_n] / 20. << " "
+      << sum3[ind_n] / 20.  << " " << sum4[ind_n] / 20. << " "
+      << sum5[ind_n] / 20.  << " " << sum6[ind_n] / 20. << " "
+      << sum7[ind_n] / 20.  << std::endl;
   }
   file.close();
 
   {
     std::ofstream file;
-    file.open("examples/results_by_p");
+    file.open("examples/results_by_p1");
     
-    memset(sum1, 0, 19*sizeof(int));
-    memset(sum2, 0, 19*sizeof(int));
-    memset(sum3, 0, 19*sizeof(int));
-    memset(sum4, 0, 19*sizeof(int));
-    memset(sum5, 0, 19*sizeof(int));
-    memset(sum6, 0, 19*sizeof(int));
-    memset(sum7, 0, 19*sizeof(int));
-    memset(sum8, 0, 19*sizeof(double));
+    memset(sum1, 0, 20*sizeof(int));
+    memset(sum2, 0, 20*sizeof(int));
+    memset(sum3, 0, 20*sizeof(int));
+    memset(sum4, 0, 20*sizeof(int));
+    memset(sum5, 0, 20*sizeof(int));
+    memset(sum6, 0, 20*sizeof(int));
+    memset(sum7, 0, 20*sizeof(double));
     for(double p = 0; p < 1; p+=0.05) {
       int ind_p = p/0.05;
       for(int n = 5; n < 50; n+=5) {
@@ -99,12 +95,12 @@ int main() {
         sum4[ind_p] += colors_sdp3[ind_n][ind_p];
         sum5[ind_p] += clique_greedy[ind_n][ind_p];
         sum6[ind_p] += clique_sdp[ind_n][ind_p];
-        sum7[ind_p] += lovazs[ind_n][ind_p];
-        sum8[ind_p] += delta[ind_n][ind_p];
+        sum7[ind_p] += delta[ind_n][ind_p];
       }
-      file << p << " " << sum1[ind_p] / 9.  << " " << sum2[ind_p] / 9. 
-      << " " << sum3[ind_p] / 9.  << " " << sum4[ind_p] / 9.  << " " << sum5[ind_p] / 9. << " " << sum6[ind_p] / 9.
-      << " " << sum7[ind_p] / 9. << " " << sum8[ind_p] / 9. << std::endl;
+      file << p << " " << sum1[ind_p] / 9.  << " " << sum2[ind_p] / 9. << " "
+        << sum3[ind_p] / 9.  << " " << sum4[ind_p] / 9. << " "
+        << sum5[ind_p] / 9.  << " " << sum6[ind_p] / 9. << " "
+        << sum7[ind_p] / 9.  << std::endl;
     }
     file.close();
   }

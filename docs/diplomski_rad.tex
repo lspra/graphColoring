@@ -67,18 +67,26 @@
 \chapter{Uvod}
 \label{pog:uvod}
 
-U teoriji grafova, problemi bojanja grafa i traženja maksimalne klike poznati su NP-teški problemi s brojnim primjenama. Slijedi opis
-ovih problema. Bojanje grafa svakom vrhu grafa pridružuje jednu boju na način da su svaka dva susjedna vrha različitih boja. Poznate primjene ovog
-problema su alociranju registara, raspoređivanju zadataka\dots  %TODO izvor za primjenu %TODO ovdje ili poslije treba spomenuti 3 color theorem
+U teoriji grafova, problemi bojanja grafa i traženja maksimalne klike poznati su NP-teški problemi s brojnim primjenama. Bojanje grafa svakom vrhu 
+grafa pridružuje jednu boju na način da su svaka dva susjedna vrha različitih boja. Svaki planar graf je moguće obojati u četiri boje \cite{fritsch1998four}.
+Poznate primjene ovog problema su alociranje registara \cite{inproceedings}, raspoređivanje zadataka \cite{10.1093/comjnl/12.4.317}\dots
 
 Problem traženja maksimalne klike je problem pronalaska potpuno povezanog podgrafa. Problem ima česte primjene u kemiji i bioinformatici,
-primjerice za pronalaženje sličnih struktura u molekulama. %TODO izvor za primjenu
+primjerice za pronalaženje sličnih struktura u molekulama \cite{NAP4886}.
 
 Za oba ovo problema često je dovoljno pronaći rješenje koje je blizu optimalnom. Semidefinitno programiranja daje dobre aproksimacije rješenja problema
 koje se mogu izračunati u polinomnoj složenosti.
 
-%TODO
-Rad je podijeljen u X poglavlja. U svakom je opisano ovo.
+Rad je podijeljen u 10 poglavlja. U drugom poglavlju dan je opširniji opis problema bojanja grafova
+i traženja maksimalne klike kao i opis jednostavnih metoda rješavanja ovih problema.
+U trećem poglavlju dan je pregled semidefintnog programiranja i metoda rješavanja takvih problema.
+U četvrtom poglavlju opisana je važnost Lovászovog broja i SDP formulacija za pronalazak njegove vrijednosti.
+U petom poglavlju opisan je algoritam za bojanje grafova uz pomoć semidefinitnog programiranja.
+U šestom poglavlju opisano je rješavanje problema pronalaska maksimalne klike uz primjenu semidefinitnog programiranja.
+U sedmom poglavlju dan je pregled programski ostvaranje i opis rada programa kroz primjere.
+U osmom poglavlju prikazani su rezultati rada i mogućnosti daljnjeg rada u ovom području.
+U devetom poglavlju dane su upute za prevođenje i pokretanje programa.
+U desetom poglavlju iznesen je zaključak.
 
 %-------------------------------------------------------------------------------
 \chapter{Opis problema}
@@ -118,7 +126,7 @@ Standardni oblik problema je:
 
 \begin{equation}
 \begin{split}
-  & min \langle CX \rangle \\
+  & min f = \langle CX \rangle \\
   t. d. & \langle A_iX \rangle = b_i \\
         & X = X^T \succeq 0
 \end{split}
@@ -135,12 +143,12 @@ Dualni problem zadan je s jednadžbama:
 \end{split}
 \end{equation}
 
-%TODO to bi trebalo iti neka primjena SDP
+Semidefinitno programiranje ima primjene u rješavanju problema makimalnog reza (engl. \textit{max cut problem}) \cite{7804990}.
 
 \section{Teorija dualnosti}
 U optimizacijskim problemima, razmak dualnosti (engl. \textit{duality gap}) je razlika između optimuma primarnog $p^*$ i dualnog $d^*$ problema, $p^* - d^*$.
 Kažemo da vrijedi slaba dualnost ako je razmak dualnosti veći ili jednak od 0. Jaka dualnost vrijedi ako su optimum primarnog i dualnog problema jednaki, to jest
-ako je razmak dualnosti jednak 0. % TODO layon mi je citat
+ako je razmak dualnosti jednak 0 \cite{HINTERMULLER2019437}.
 
 Za SDP je razmak dualnosti jednak:
 \begin{equation}
@@ -152,14 +160,15 @@ Za SDP je razmak dualnosti jednak:
 \end{equation}
 
 Iz ovoga vidimo da za SDP vrijedi slaba dualnost, ali ne nužno i jaka. Prema Slaterovom uvjetu, jaka dualnost je zadovoljena ako postoji rješenje primarnog problema u kojem je
-zadovoljen uvjet $X \succ 0$ i rješenje dualnog problema takvo da vrijedi $Z \succ 0$. %TODO citat za Slaterov uvjet
+zadovoljen uvjet $X \succ 0$ i rješenje dualnog problema takvo da vrijedi $Z \succ 0$ \cite{slater}.
 
 \section{Metode rješavanja SDP}
 Postoje razne metode rješavanja SDP-a, primjerice elipsoidna metoda i metoda unutarnje točke. Ove metode numerički pronalaze rješenje, obično u polinomnoj složenosti.
 
 \subsection{Metoda unutarnje točke}
-Kao što ime kaže, metoda unutarnje točke započinje s nekom točkom unutar prostora koji zadovoljava uvjete semidefinitnog programa i priližava se optimumu. 
-%TODO ovo treba dosta bolje objasniti ali neda mi se skuziti 
+Kao što ime kaže, metoda unutarnje točke započinje s nekom točkom unutar prostora koji zadovoljava uvjete semidefinitnog programa i priližava se optimumu.
+Algoritam definira zamjensku funkciju za optimizaciju $f*(x) = f(x) + b(x)$, gdje je $b(x)$ takozvana granična funkcija. $b(x)$ se približava beskonačnosti kako se
+$x$ približava granici problema, dok unutar prostora problema ima malu vrijednost blizu 0. Bilo koji optimizacijski algoritam će izbjegavati prostor granice i naći će minimum problema.
 
 \chapter{Lovászov broj}
 \label{pog:lovaszov_broj}
@@ -208,7 +217,6 @@ element $m_{i,j}$ postavi na skalarni produkt vektora $v_i$ i $v_j$. Ako je pozn
 pomoću dekompozicije svojstvenim vrijednosti (engl. \textit{eigendecomposition}) tako da vrijedi $M = UU^T$. Sada su stupci matrice $U$, jedinični
 vektori koji čine vektorsko k-bojanje grafa. \cite{karger1998approximategraphcoloringsemidefinite}
 
-%TODO ovo je pol teorema iz KMS, cini mi se dovoljno al treba prouciti
 \section{Povezanost vektorskog bojanja grafa i bojanja grafa}
 \begin{theorem}\label{teorem1}
   Za $k \leq n$, postoji k jediničnih vektora $v_i \in \Re^n$ takvih da je $v_i \cdot v_j = -\frac{1}{k-1}, \forall i \neq j$ 
@@ -274,7 +282,6 @@ Motivacija iza korištenja algoritma je činjenica da su vektori koji predstavlj
 Generira se $N$ slučajnih hiperravnina koje prolaze kroz ishodište koordinatnog sustava. One dijele prostor na $2N$ dijelova. Svakom dijelu je pridružena
 jedna boja te su svi vektori u tom dijelu obojani jednom bojom. Ukoliko su dva susjedna vrha obojana istom bojom, jednom od tih vrhova treba maknuti boju.
 
-%TODO mozda ovdje bolje citirati layon ili nekog drugog, pa sljedeci section KMS
 Vjerojatnost da su 2 susjedna vrha s različitih strana jedne hiperravnine je $\beta / \Pi$, gdje je $\beta$ kut između vektorskih reprezentacija
 tih vektora. Za veći broj hiperravnina, smanjuje se vjerojatnost da su vrhovi u jednakim podprostorima. Ovo vrijedi za sve vrhove, a ne samo za susjedne.
 Budući da susjedni vektori imaju veliki kuti između vektorskih reprezentacija, oni imaju manju vjerojatnost da se nalaze u jednakim podprostisteorima.
@@ -328,7 +335,6 @@ Izraz $v_i^2+v_{n+1}v_{i}$ je jednak 0 ako je $v_i$ različitog predznaka kao i 
 Što znači da je vrijednost optimizacijske funkcije jednaka broju vrhova u maksimalnom stabilnom skupu.
 
 Problem se relaksira u SDP na sljedeći način (iz \cite{article}):
-%TODO možda bi svugdje trebalo zameniti ovaj langle jer tu grozno zgleda
 \begin{equation} \label{eq1}
   \begin{split}
     & \max \Biggl \langle \begin{bmatrix}
@@ -347,8 +353,8 @@ Iz relaksiranog problema dobiva se stabilni skup prateći sljedeći algoritam:
 \begin{algoritam} Određivanje maksimalnog stabilnog skupa
   \label{maks_clique}
   \begin{enumerate}
-    \item Iz optimalnog $X^*$ dobivenog iz \ref{eq1} određuje se V za koji vrijedi $X^* = V^TV$
-    \item Za slučajan jedinični vektor $u \in \Re^{n+1}$ računa se $v = sign(V^Tu)$
+    \item Iz optimalnog $X^*$ dobivenog iz \ref{eq1} određuje se V za koji vrijedi $X^* = VV^T$
+    \item Za slučajan jedinični vektor $u \in \Re^{n+1}$ računa se $v = sign(Vu)$
     \item Za svaki $(i,j) \in E$, ako ne vrijedi $|v_i+v_j+v_{n+1}| = 1$, mijenja se prednjak od $v_i$ ili $v_j$, ono koji je udaljeniji
         od vektora $v_{n+1}$
   \end{enumerate}
@@ -360,12 +366,13 @@ Stabilan skup vrhova je onaj skup vrhova koji imaju jednaki predznak kao i $v_{n
 \label{pog:programska_ostvarenja}
 
 U sklopu rada implementiran je algoritam za bojanje grafova i traženje maksimalne klike.
-Ostvaren je izračun Lovászove theta funkcije. %TODO ovo nije napravljeno
 Implementiran je program za vizualizaciju grafa i program za generiranje slučajnih grafova.
 
-Sav kod napisan je u C++-u uz korištenje biblioteke DSDP \cite{dsdp-user-guide} i OpenBLAS implementacije BLAS/LAPACK standarda \cite{openBLAS}. %TODO je standard prava rec
+Sav kod napisan je u C++-u uz korištenje biblioteke DSDP \cite{dsdp-user-guide} i OpenBLAS implementacije BLAS/LAPACK paketa \cite{openBLAS}.
 
-%TODO klasa ucitava podatke, ovak su spremljene stvari, postoje ove funkcije
+Definirana je klasa \verb|Graph| koja učitava graf spremljen u datoteci u obliku matrice susjedstva. Definirane su metode \verb|color| koja boja graf
+algoritmom zaokruživanja vektorskim projekcijama, \verb|greedy_color| koja boja graf $\delta + 1$ algoritmom, \verb|find_max_clique| koja
+pronalazi veliku kliku SDP relaksacijom i \verb|greedy_clique| koja pronalazi lokalno maksimalnu kliku.
 
 \section{Bojanje grafova}
 Implementirana su dva algoritma za bojanje grafova: SDP relaksacijom uz zaokruživanje vektorskim projekcijama i $\delta + 1$ algoritmom.
@@ -533,7 +540,6 @@ određuje stabilni skup koji je zapravo klika u početnom grafu.
 Na slici \ref{fig:klika} prikazana je klika dobivena algoritmom \ref{maks_clique} za graf G prikaz na slici \ref{grafG}. Klika sadrži vrhove 5, 7, 8 i 9.
 Ovo klika je ujedno i maksimalna klika grafa G.
 
-%TODO mislim da sam mozda zamenila V i V^T
 U tablici \ref{vekt_clique} prikaza je matrica $V$ koja je dobivena faktorizacijom optimalnog rješenje SDP-a \ref{eq1} za graf G. Prema algoritnu \ref{maks_clique}
 generira se slučajan vektor r koju je zapisan u tablici \ref{table_clique_r}. Zatim se računa umnožak matrice $V$ i vektora $r$ te se određuje predznak
 svakog elementa vektora umnoška. Ovi predznaci su zapisani u tablici \ref{table_clique_sign}. Za graf G elementi na mjestima 5, 7, 8 i 9 imaju jednaki predznak ($-1$)
@@ -546,7 +552,6 @@ kao i dodatan element 10 te oni čine potencijalnu kliku. Provjerom vidimo da sv
   \label{fig:klika}
 \end{figure}
 
-%TODO mislim da sam mozda zamenila V i V^T
 \begin{table}[h]
   \caption{Faktorizacija $V$ optimalnog rješenja SDP relaksacije za graf G}
   \label{vekt_clique}
@@ -596,7 +601,6 @@ kao i dodatan element 10 te oni čine potencijalnu kliku. Provjerom vidimo da sv
   \end{tabular}
 \end{table}
 
-%TODO mislim da sam mozda zamenila V i V^T
 \begin{table}
   \caption{Predznak umnoška matrice V i vektora r}
   \label{table_clique_sign}
@@ -618,15 +622,16 @@ Za potrebe testiranja napravljen je jednostavan generator slučajnih grafova. Za
 se graf s $n$ vrhova. Bridovi se generiraju slučajno, za svaki brid je vjerojatnost generiranja $p$. Graf je spremljen u datoteku u obliku 
 matrice susjedstva. Generiran je po jedan graf za sve $n \in \{5, 10, \dots, 40, 45\}$ i sve $p \in \{0, 0.05, \dots, 0.9, 0.95\}$.
 
+\section{Bojanje grafova}
 Svi generirani grafovi obojani su $\delta + 1$ algoritmom i algoritmom zaokruživanja vektorskim projekcijama uz $\epsilon \in \{-0.2, 0, 0.2\}$.
 Za algoritam zaokruživanja vektorskim projekcijama, rezultati su izračunati 3 puta te je uzeta najbolja vrijednost. Za svaki algoritam su izračunati prosjeci po
 parametru $n$ koji su prikazani u tablici \ref{table:bojanje_n}. Iz tablice vidimo da algoritam zaokruživanja vektorskim projekcijama daje najbolje rezultate za $\epsilon = -0.2$, a
 najgore za $\epsilon = 0.2$. Algoritam zaokruživanja vektorskim projekcijama za $\epsilon = -0.2$ i $\delta + 1$ bojanje daju otprilike jednake rezultate. Zanimljivo je primjetiti
 da $\delta + 1$ algoritam boja graf s puno manje od $\delta$ boja, pogotovo za veliki $n$.
 
-U
+U tablici \ref{table:bojanje_p}, prikazani su prosječni rezultati po parametru $p$. Vidimo da je SDP relaksacija bolja od $\delta + 1$ bojanja za veliki
+$p$ što je za očekivati jer u grafovima generiranima s većim $p$ ima veći broj vrhova koji imaju visoki stupanj.
 
-Određen su klike pohlepnim pronalaskom lokalno maksimalne klike i pronalaskom SDP relaksacijom. 
 
 \begin{table}
   \caption{Broj boja po algoritmu po n}
@@ -636,24 +641,24 @@ Određen su klike pohlepnim pronalaskom lokalno maksimalne klike i pronalaskom S
     n & $\delta +1$ bojanje & SDP bojanje $\epsilon = -0.2$& SDP bojanje $\epsilon = 0$ & SDP bojanje $\epsilon = 0.2$ & $\delta$ \\
     \hline
     \hline
-      5 & 2.85 & 2.85 & 3.25 & 3.45 & 3.05 \\
-      \hline
-      10 & 4.25 & 4.35 & 4.8 & 5.85 & 6.45 \\
-      \hline
-      15 & 5.95 & 5.65 & 6.2 & 8.1 & 9.65 \\
-      \hline
-      20 & 7.2 & 6.9 & 7.8 & 10.1 & 12.65 \\
-      \hline
-      25 & 8.1 & 8.4 & 9.4 & 13.15 & 15.5 \\
-      \hline
-      30 & 9.6 & 10.75 & 11.45 & 16.3 & 19 \\
-      \hline
-      35 & 10.6 & 10.85 & 12.8 & 18.75 & 21.5 \\
-      \hline
-      40 & 12 & 12.3 & 13.65 & 22.05 & 24.35 \\
-      \hline
-      45 & 12.65 & 13.2 & 15.05 & 24.55 & 27 \\
-      \hline
+    5 & 2.85 & 2.95 & 3.2 & 3.6 & 3.05\\
+    \hline
+    10 & 4.25 & 4.5 & 4.7 & 5.8 & 6.45\\
+    \hline
+    15 & 5.95 & 5.85 & 6.35 & 7.95 & 9.65\\
+    \hline
+    20 & 7.2 & 7.2 & 7.9 & 10.4 & 12.65\\
+    \hline
+    25 & 8.1 & 8.3 & 9.65 & 12.4 & 15.5\\
+    \hline
+    30 & 9.6 & 9.95 & 11.25 & 17.5 & 19\\
+    \hline
+    35 & 10.6 & 11.25 & 12.65 & 18.65 & 21.5\\
+    \hline
+    40 & 12 & 12.45 & 13.85 & 21.3 & 24.35\\
+    \hline
+    45 & 12.65 & 13.55 & 15 & 24.15 & 27    \\
+    \hline
   \end{tabular}
 \end{table}
 
@@ -662,19 +667,218 @@ Određen su klike pohlepnim pronalaskom lokalno maksimalne klike i pronalaskom S
   \label{table:bojanje_p}
   \begin{tabular}{|c|c|c|c|c|c|}
     \hline
-     & $\delta +1$ bojanje & SDP bojanje $\epsilon = -0.2$& SDP bojanje $\epsilon = 0$ & SDP bojanje $\epsilon = 0.2$ & $\delta$ \\
+    p & $\delta +1$ bojanje & SDP bojanje $\epsilon = -0.2$& SDP bojanje $\epsilon = 0$ & SDP bojanje $\epsilon = 0.2$ & $\delta$ \\
     \hline
     \hline
-    
+    0 & 1 & 2.22222 & 4.44444 & 11.7778 & 0 \\
+    \hline
+    0.05 & 2.55556 & 2.55556 & 4.11111 & 10.6667 & 3.66667 \\
+    \hline
+    0.1 & 3.44444 & 3.33333 & 4.66667 & 10.4444 & 5 \\
+    \hline
+    0.15 & 3.88889 & 3.66667 & 5 & 11.3333 & 7.55556 \\
+    \hline
+    0.2 & 4.66667 & 4.44444 & 5.77778 & 10.3333 & 9.33333 \\
+    \hline
+    0.25 & 5.44444 & 6 & 6.66667 & 11.3333 & 11.7778 \\
+    \hline
+    0.3 & 10.8889 & 12 & 13.3333 & 22.6667 & 23.5556 \\
+    \hline
+    0.35 & 6.44444 & 6.66667 & 7.66667 & 12.3333 & 13.2222 \\
+    \hline
+    0.4 & 6.66667 & 7.11111 & 8.33333 & 12.1111 & 15.2222 \\
+    \hline
+    0.45 & 7.22222 & 7.44444 & 8.66667 & 12.6667 & 16.1111 \\
+    \hline
+    0.5 & 8 & 7.88889 & 9.33333 & 13.2222 & 16.6667 \\
+    \hline
+    0.55 & 9 & 9 & 10.2222 & 13.4444 & 18.7778 \\
+    \hline
+    0.6 & 9.66667 & 10.1111 & 10.3333 & 14.3333 & 19.2222 \\
+    \hline
+    0.65 & 9.66667 & 10.1111 & 10.7778 & 14.6667 & 20.2222 \\
+    \hline
+    0.7 & 10.3333 & 11 & 11.8889 & 14.7778 & 21.2222 \\
+    \hline
+    0.75 & 11.2222 & 12.4444 & 12.3333 & 15.6667 & 22.3333 \\
+    \hline
+    0.8 & 12.3333 & 12.6667 & 13.5556 & 16.3333 & 23.6667 \\
+    \hline
+    0.85 & 13.4444 & 13.3333 & 14.1111 & 16.5556 & 23.7778 \\
+    \hline
+    0.9 & 15.1111 & 14.7778 & 15.2222 & 18.3333 & 24.6667 \\
+    \hline
+    0.95 & 17.1111 & 16.3333 & 16.7778 & 17.8889 & 25 \\
+    \hline
   \end{tabular}
 \end{table}
 
+\section{Pronalazak maksilne klike}
+Za sve generirane grafove određen su klike pohlepnim pronalaskom lokalno maksimalne klike i pronalaskom SDP relaksacijom. SDP relaksacijom je klika pronađena
+3 puta i uzeta je vrijednost maksimalne od pronađenih klika. Prosječne veličine pronađenih klike za svaki $n$ prikazane su u tablici \ref{table:klik_n}
+Iz tablice je vidljivo da algoritam baziran na SDP relaksaciji pronalazi veći klike od pohlepnog, otprilike za jedan vrh više po kliki.
+
+U tablici \ref{table:klik_p} prikazane su prosječne veličine pronađenih klika za različite vrijednosti parametra $p$. Za gotovo sve vrijednosti
+parametra, SDP relaksacijom se pronalaze veća klika nego pohlepnim algoritmom. Najveća razlika između algoritama je za vrijednosti $p \sim 0.5$.
+
+\begin{table}
+  \caption{Veličina pronađene klike po n}
+  \label{table:klik_n}
+  \centering
+  \begin{tabular}{|c|c|c|}
+    \hline
+    n & pohlepni algoritam & SDP relaksacija \\
+    \hline
+    \hline
+    5 & 2.5 & 2.8 \\
+    \hline
+    10 & 3.5 & 4.05 \\
+    \hline
+    15 & 4.45 & 5 \\
+    \hline
+    20 & 4.7 & 5.6 \\
+    \hline
+    25 & 5.4 & 6.55 \\
+    \hline
+    30 & 6 & 7.6 \\
+    \hline
+    35 & 6.15 & 7.75 \\
+    \hline
+    40 & 6.85 & 7.65 \\
+    \hline
+    45 & 6.9 & 7.55 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}
+  \caption{Veličina pronađene klike po p}
+  \label{table:klik_p}
+  \centering
+  \begin{tabular}{|c|c|c|}
+    \hline
+    p & pohlepni algoritam & SDP relaksacija \\
+    \hline
+    \hline
+    0 & 1 & 0.888889 \\
+    \hline
+    0.05 & 1.77778 & 2.11111 \\
+    \hline
+    0.1 & 2 & 2.44444 \\
+    \hline
+    0.15 & 2.33333 & 2.77778 \\
+    \hline
+    0.2 & 2.33333 & 2.77778 \\
+    \hline
+    0.25 & 2.66667 & 4 \\
+    \hline
+    0.3 & 5.33333 & 8 \\
+    \hline
+    0.35 & 3.44444 & 4.33333 \\
+    \hline
+    0.4 & 3.44444 & 4.44444 \\
+    \hline
+    0.45 & 3.77778 & 5.33333 \\
+    \hline
+    0.5 & 4.22222 & 5.22222 \\
+    \hline
+    0.55 & 4.77778 & 6.11111 \\
+    \hline
+    0.6 & 5.66667 & 5.66667 \\
+    \hline
+    0.65 & 5.55556 & 7 \\
+    \hline
+    0.7 & 6.11111 & 7.66667 \\
+    \hline
+    0.75 & 6.55556 & 8.22222 \\
+    \hline
+    0.8 & 9 & 8.88889 \\
+    \hline
+    0.85 & 9.44444 & 11.1111 \\
+    \hline
+    0.9 & 11.6667 & 12.6667 \\
+    \hline
+    0.95 & 14.7778 & 15.5556 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\section{Wigdersonova tehnika}
+Dobiveni rezultati bojanja grafova algoritmom 
+
 \chapter{Upute za prevođenje i pokretanje}
 \label{pog:upute_za_prevođenje_i_pokretanje}
+\section{Upute za prevođenje}
+Prije prevođenja pretpostavlja se da je na računalu instalirani:  DSDP \cite{dsdp-user-guide}, OpenBLAS \cite{openBLAS} i raylib.
+U \verb|path| trebaju postojati \verb|libdsdp.a|, \verb|lapack|, \verb|blas| i \verb|raylib|. Definiran je \verb|Makefile| pa je moguće
+prevođenje pomoću naredbe \verb|make|. Ovime nastaju programi \verb|.out/main.out|, \verb|.out/visualize.out|, \verb|.out/generate.out| i 
+\verb|.out/tester.out|.
+
+\section{Glavni program}
+Program \verb|.out/main.out| glavni je program kojem se zadaju opcije što sve korisnik želi ispisano na ekran te put do datoteke u kojoj je spremljen
+graf. Moguće opcije su ispis bridova grafa, ispis boja grafa obojanog $\delta + 1$ algoritmom, ispis boja grafa obojanog algoritmom zaokruživanja
+vektorskim projekcijama, ispis klike pronađene pohlepnim algoritmom i ispis klike pronađene semidefinitnom relaksacijom.
+
+\begin{verbatim}
+  usage: main.out [options] file
+  options:
+  --help         display help
+  -print         print graph
+  -delta_color   color the graph with delta+1 algorithm
+  -color         color the graph with SDP algorithm
+  -greedy_clique find clique using greedy algorithm
+  -clique        find clique using SDP algorithm
+\end{verbatim}
+
+\section{Program za vizualizaciju}
+Program \verb|.out/visualize.out| program je za vizualizaciju grafa. Prilikom pokretanja upisuju se opcije vizualizacije i ime datoteke u kojoj je 
+spremljen graf. Moguća je vizualizacija obojanog grafa, ili $\delta + 1$ algoritmom ili algoritmom zaokruživanja vektorskim projekcijama. Također je
+moguće vizualizirati kliku grafa, pronađenu ili pohlepnim algoritmom ili SDP relaksacijom. Na slici \ref{fig:visualize} prikazani su primjeri
+vizualizacije bojanja i maksimalne klike grafova.
+
+\begin{verbatim}
+  usage: visualize.out option file
+  options:
+  --help         display help
+  -delta_color   color the graph with delta+1 algorithm
+  -color         color the graph with SDP algorithm
+  -greedy_clique find clique using greedy algorithm
+  -clique        find clique using SDP algorithm
+\end{verbatim}
+
+
+\begin{figure}
+  \centering
+  \begin{subfigure}[b]{0.4\linewidth}
+    \includegraphics[scale=0.25]{images/color.png}
+    \subcaption{Primjer vizualizacije obojanog grafa}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.4\linewidth}
+    \includegraphics[scale=0.25]{images/clique.png}
+    \subcaption{Primjer vizualizacije klike grafa}
+  \end{subfigure}
+  \caption{Primjeri programa vizualizacije}
+  \label{fig:visualize}
+\end{figure}
+
 
 %--- ZAKLJUČAK / CONCLUSION ----------------------------------------------------
 \chapter{Zaključak}
 \label{pog:zakljucak}
+U sklopu rada, dan je pregled problema bojanja grafova i pronalaska maksimalne klike grafa.
+
+Implementirano je bojanje grafova pomoću SDP relaksacije uz algoritam zaokruživanja vektorskim projekcijama i pomoću $\delta + 1$ bojanja. 
+Oba algoritma u polinomnom vremenu ispravno bojaju graf, no $\delta +1$ algoritam eksperimentalno daje bolje rezultate.
+U danjem radu, bilo bi moguće poboljšati bojanje grafa algoritmom zaokruživanja uz primjenu Wigdersonove tehnike. %TODO ovo treba negde ranije opisati kaj je
+
+Mogle bi se istražiti i implementirati druge formulacije semidefinitnih relaksacija bojanja grafova koje bi se tada usporedile s trenutnim
+implementacijama. U danjem radu, trebalo bi implementirati izračun Lovászove theta funkcije kao ocjenu veličine broja boja i maksimalne klike.
+
+Također, implementiran je pronalazak velike klike grafa pomoću semidefinitne relaksacije problema i pomoću
+pohlepnog algoritma traženja lokalno maksimalne klike. Algoritam semidefinitne relaksacija pronalazi veće klike.
+
+Ove rezultate trebalo bi usporediti s drugim nekomercijalnim bibliotekama.
 
 
 %--- LITERATURA / REFERENCES ---------------------------------------------------
@@ -689,23 +893,42 @@ Određen su klike pohlepnim pronalaskom lokalno maksimalne klike i pronalaskom S
 
 % Sažetak na hrvatskom
 \begin{sazetak}
-  Unesite sažetak na hrvatskom.
+U sklopu rada, dan je opis problema bojanja grafova i pronalaska maksimalne klike grafa. Opisani su jednostavni načini rješavanja
+ovih problema. Opisano je formulacija semidefinitnih problema kao i njihova primjena kod bojanja grafova i traženja maksimalne klike.
+Objašnjena je važnost Lovászove theta funkcije i dana formulacija semidefinitnog problema za pronalazak njezine vrijednosti.
+
+Implementirano je bojanje grafova pomoću SDP relaksacije uz algoritam zaokruživanja vektorskim projekcijama i pomoću $\delta + 1$ bojanja
+i uspoređeni su rezultati. Također, implementiran je pronalazak velike klike grafa pomoću semidefinitne relaksacije problema i pomoću
+pohlepnog algoritma traženja lokalno maksimalne klike.
+
+Implementiran je i program za vizualizaciju grafa koji prikazuje obojani graf ili njegovu maksimalnu kliku.
 
 \end{sazetak}
 
 \begin{kljucnerijeci}
-  prva ključna riječ; druga ključna riječ; treća ključna riječ
+  bojanje grafa; semidefinitno programiranje; maksimalna klika; Lovászova fukcija
 \end{kljucnerijeci}
 
 
 % Abstract in English
 \begin{abstract}
-  Enter the abstract in English.
+  In this paper, graph coloring and maximum clique number are described. Simple procedures for
+  solving these problems are explained. The formulation of semidefinite problems is given
+  and so is their application in graph coloring and finding max clique.
+  The importance of Lovász theta function is explain and semidefinite program
+  for finding its value is given.
+
+  Graph coloring is implemented using SDP relaxing and rounding via vector projections.
+  Graph coloring is also solved using $\delta + 1$ coloring and the results are compared.
+  Finding a large clique is also implemented both via semidefinite relaxation
+  and using a greedy algorithm of finding locally maximal clique.
   
+  Graph visualisation program is also created which such either a colored graph
+  or its maximum clique.
 \end{abstract}
 
 \begin{keywords}
-  the first keyword; the second keyword; the third keyword
+  graph coloring; semidefinite programming; maximal clique number; Lovász function
 \end{keywords}
 
 
